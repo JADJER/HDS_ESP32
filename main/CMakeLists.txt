@@ -1,6 +1,4 @@
-set(SOURCES
-        main.cpp
-        ecu.cpp
-        utils.cpp)
+set(SOURCES main.cpp)
+set(COMPONENTS connection ecu)
 
-idf_component_register(SRCS ${SOURCES} INCLUDE_DIRS "include")
+idf_component_register(SRCS ${SOURCES} INCLUDE_DIRS . REQUIRES ${COMPONENTS})

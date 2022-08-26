@@ -6,7 +6,6 @@
 
 #include "utils.hpp"
 
-
 float calcValueDivide256(int val) {
   //convert to dec, multiple by 5, then divide result by 256
   //used for TPS Volt, ECT Volt, IAT Volt, MAP Volt
