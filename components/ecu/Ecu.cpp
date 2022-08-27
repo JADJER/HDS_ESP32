@@ -3,56 +3,119 @@
 //
 
 #include "Ecu.hpp"
-#include "driver/gpio.h"
-#include "esp_log.h"
-#include <thread>
+#include "Arduino.h"
+#include <iostream>
 
-static char const* TAG = "Ecu";
-
-ECU::ECU(std::shared_ptr<IConnection> const& connection) {
+ECU::ECU() {
   m_rx = 16;
   m_tx = 17;
-
-  m_connection = connection;
 }
 
 ECU::~ECU() = default;
 
-void ECU::init() const {
-  ESP_LOGI(TAG, "Initialize ECU...");
-
+bool ECU::connect() const {
+  std::cout << "Connect to ECU:" << std::endl;
   wakeup();
+  return initialize();
+}
 
-  //  Send FE 04 FF FF
-  m_connection->writeData(TAG, {0xFE, 0x04, 0xFF, 0xFF});
-  auto data1 = m_connection->readData(TAG);
+void ECU::test() const {
+  uint8_t message1[] = {0x72, 0x07, 0x72, 0xD1, 0x00, 0x05, 0x3F};
+  uint8_t message2[] = {0x72, 0x07, 0x72, 0xD0, 0x00, 0x05, 0x40};
+  uint8_t message3[] = {0x72, 0x07, 0x72, 0xD0, 0x00, 0x06, 0x3F};
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  Serial2.begin(10400);
 
-  //  Send 72 05 00 F0 99
-  m_connection->writeData(TAG, {0x72, 0x05, 0x00, 0xF0, 0x99});
-  auto data2 = m_connection->readData(TAG);
+  {
+    Serial2.write(message1, sizeof(message1));
+    Serial2.flush();
+    delay(50);
+
+    std::cout << "OK: 02 0B 72 D1 00 03 00 00 00 00 AD" << std::endl;
+
+    int buffCount = 0;
+    while (Serial2.available() > 0 and buffCount < 32) {
+      uint8_t value = Serial2.read();
+      std::cout << value;
+      buffCount++;
+    }
+    std::cout << std::endl;
+  }
+
+  {
+    Serial2.write(message2, sizeof(message2));
+    Serial2.flush();
+    delay(50);
+
+    std::cout << "OK: 02 0B 72 D0 00 00 00 00 00 00 B1" << std::endl;
+
+    int buffCount = 0;
+    while (Serial2.available() > 0 and buffCount < 32) {
+      uint8_t value = Serial2.read();
+      std::cout << value;
+      buffCount++;
+    }
+    std::cout << std::endl;
+  }
+
+  {
+    Serial2.write(message3, sizeof(message3));
+    Serial2.flush();
+    delay(50);
+
+    std::cout << "OK: 02 0B 72 D0 00 00 00 00 00 00 00 B0" << std::endl;
+
+    int buffCount = 0;
+    while (Serial2.available() > 0 and buffCount < 32) {
+      uint8_t value = Serial2.read();
+      std::cout << value;
+      buffCount++;
+    }
+    std::cout << std::endl;
+  }
 }
 
 void ECU::wakeup() const {
-  ESP_LOGI(TAG, "Wakeup");
+  std::cout << "Wakeup ECU..." << std::endl;
 
-  gpio_config_t io_conf = {
-      .pin_bit_mask = (1ULL << m_tx),
-      .mode = GPIO_MODE_OUTPUT,
-      .pull_up_en = GPIO_PULLUP_DISABLE,
-      .pull_down_en = GPIO_PULLDOWN_ENABLE,
-      .intr_type = GPIO_INTR_DISABLE,
-  };
+  pinMode(m_tx, OUTPUT);
 
-  esp_err_t ret = gpio_config(&io_conf);
-  if (ret) {
-    ESP_LOGE(TAG, "%s init gpio failed: %s\n", __func__, esp_err_to_name(ret));
+  digitalWrite(m_tx, LOW);
+  delay(70);
+
+  digitalWrite(m_tx, HIGH);
+  delay(130);
+}
+
+bool ECU::initialize() const {
+  std::cout << "Initialize ECU..." << std::endl;
+
+  uint8_t wakeupMessage[] = {0xFE, 0x04, 0xFF, 0xFF};
+  uint8_t initMessage[] = {0x72, 0x05, 0x00, 0xF0, 0x99};
+  uint16_t checksum = 0x100;
+
+  Serial2.begin(10400);
+
+  Serial2.write(wakeupMessage, sizeof(wakeupMessage));
+  delay(200);
+
+  Serial2.write(initMessage, sizeof(initMessage));
+  Serial2.flush();
+  delay(50);
+
+  int initBuffCount = 0;
+  int initSum = 0;
+  while (Serial2.available() > 0 and initBuffCount < 32) {
+    uint8_t value = Serial2.read();
+    std::cout << value;
+    initSum += value;
+    initBuffCount++;
+  }
+  std::cout << std::endl;
+
+  if(initSum == checksum) {
+    return true;
   }
 
-  gpio_set_level(static_cast<gpio_num_t>(m_tx), 0);
-  std::this_thread::sleep_for(std::chrono::milliseconds(70));
-
-  gpio_set_level(static_cast<gpio_num_t>(m_tx), 1);
-  std::this_thread::sleep_for(std::chrono::milliseconds(130));
+  return false;
 }
