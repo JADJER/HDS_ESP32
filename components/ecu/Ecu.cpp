@@ -16,7 +16,9 @@ ECU::~ECU() = default;
 bool ECU::connect() const {
   std::cout << "Connect to ECU:" << std::endl;
   wakeup();
-  return initialize();
+  initialize();
+  return true;
+//  return initialize();
 }
 
 void ECU::test() const {

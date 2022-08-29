@@ -9,11 +9,11 @@ extern "C" void app_main(void) {
   ECU ecu;
 
   bool isConnected = ecu.connect();
-
   if (isConnected) {
     std::cout << "ECU is connected" << std::endl;
     ecu.test();
-  }
 
-  std::cout << "ECU connection failed" << std::endl;
+  } else {
+    std::cout << "ECU connection failed" << std::endl;
+  }
 }
