@@ -1,5 +1,5 @@
 set(SOURCES
-        Ble.cpp)
+        Indicator.cpp)
 
 set(COMPONENTS arduino)
 

@@ -2,18 +2,12 @@
 // Created by jadjer on 24.08.22.
 //
 
-#include "Ecu.hpp"
-#include <iostream>
+#include "Controller.hpp"
+#include <Arduino.h>
 
 extern "C" void app_main(void) {
-  ECU ecu;
+  initArduino();
 
-  bool isConnected = ecu.connect();
-  if (isConnected) {
-    std::cout << "ECU is connected" << std::endl;
-    ecu.test();
-
-  } else {
-    std::cout << "ECU connection failed" << std::endl;
-  }
+  Controller controller;
+  controller.spin();
 }
