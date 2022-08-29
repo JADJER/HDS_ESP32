@@ -35,8 +35,8 @@ void ECU::test() const {
 
     int buffCount = 0;
     while (Serial2.available() > 0 and buffCount < 32) {
-      uint8_t value = Serial2.read();
-      std::cout << value;
+      int value = Serial2.read();
+      std::cout << std::hex << "0x" << value << " ";
       buffCount++;
     }
     std::cout << std::endl;
@@ -51,8 +51,8 @@ void ECU::test() const {
 
     int buffCount = 0;
     while (Serial2.available() > 0 and buffCount < 32) {
-      uint8_t value = Serial2.read();
-      std::cout << value;
+      int value = Serial2.read();
+      std::cout << std::hex << "0x" << value << " ";
       buffCount++;
     }
     std::cout << std::endl;
@@ -67,8 +67,8 @@ void ECU::test() const {
 
     int buffCount = 0;
     while (Serial2.available() > 0 and buffCount < 32) {
-      uint8_t value = Serial2.read();
-      std::cout << value;
+      int value = Serial2.read();
+      std::cout << std::hex << "0x" << value << " ";
       buffCount++;
     }
     std::cout << std::endl;
@@ -106,12 +106,13 @@ bool ECU::initialize() const {
   int initBuffCount = 0;
   int initSum = 0;
   while (Serial2.available() > 0 and initBuffCount < 32) {
-    uint8_t value = Serial2.read();
-    std::cout << value;
-    initSum += value;
+    int value = Serial2.read();
+    std::cout << std::hex << "0x" << value << " ";
     initBuffCount++;
+
+    initSum += value;
   }
-  std::cout << std::endl;
+  std::cout << "SUM: " << std::hex << "0x" << initSum << std::endl;
 
   if(initSum == checksum) {
     return true;
