@@ -1,5 +1,6 @@
 set(SOURCES
-        Ecu.cpp)
+        Ecu.cpp
+        utils.cpp)
 
 set(COMPONENTS arduino)
 

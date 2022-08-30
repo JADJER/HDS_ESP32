@@ -30,10 +30,14 @@ float calcValueDivide16(int val) {
   return (val / 16) * 10;
 }
 
-uint8_t calcChecksum(const uint8_t* data, uint8_t len) {
-  uint8_t cksum = 0;
-  for (uint8_t i = 0; i < len; i++) { cksum -= data[i]; }
-  return cksum;
+uint8_t calcChecksum(uint8_t const* data, size_t len) {
+  uint8_t checkSum = 0;
+
+  for (size_t i = 0; i < len; i++) {
+    checkSum -= data[i];
+  }
+
+  return checkSum;
 }
 
 float calcKPHtoMPH(int val) {
