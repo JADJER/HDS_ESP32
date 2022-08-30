@@ -10,7 +10,7 @@ Controller::Controller() : m_ble("HDS"), m_ecu(16, 17), m_indicator(2) {
   m_ble.createService("d6f3f0a5-e35b-463e-834b-d7a69cb9ba30"); //BASE
   m_ble.createCharacteristic("d6f3f0a5-e35b-463e-834b-d7a69cb9ba30", "96902795-9837-4345-949f-706cdb7b76f6"); //RPPM
   m_ble.createCharacteristic("d6f3f0a5-e35b-463e-834b-d7a69cb9ba30", "ce914ca7-5b8b-4133-af2f-27a15f7c7d89"); //SPEED
-  m_ble.createCharacteristic("2efd999d-6b9b-46ca-9b0e-221a2998bbb8", "41ea8aa3-9541-4c36-949e-45d63a0da48b"); //BATTERY
+  m_ble.createCharacteristic("d6f3f0a5-e35b-463e-834b-d7a69cb9ba30", "41ea8aa3-9541-4c36-949e-45d63a0da48b"); //BATTERY
 
   m_ble.createService("2b3c1105-ff38-4963-b5af-c2631372f9ad"); //TPS
   m_ble.createCharacteristic("2b3c1105-ff38-4963-b5af-c2631372f9ad", "a4c6be92-0060-4702-a63a-5d7eb122eac8"); //TPS_PERCENT
