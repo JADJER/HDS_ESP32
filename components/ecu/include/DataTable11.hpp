@@ -8,19 +8,19 @@
 
 struct DataTable11 {
   uint16_t rpm;
-  uint8_t speedKPH;
+  uint8_t speed;
 
-  uint8_t tpsPercent;
-  uint8_t tpsVolts;
+  float tpsPercent;
+  float tpsVolts;
 
   float ectTemp;
-  uint8_t ectVolts;
+  float ectVolts;
 
   float iatTemp;
-  uint8_t iatVolts;
+  float iatVolts;
 
   float batteryVolts;
 
   float mapPressure;
-  uint8_t mapVolts;
+  float mapVolts;
 };

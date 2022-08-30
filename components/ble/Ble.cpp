@@ -4,7 +4,6 @@
 
 #include "Ble.hpp"
 #include <BLE2902.h>
-#include <BLE2904.h>
 #include <BLEDevice.h>
 
 BLE::BLE(std::string const& name) : m_bleCharacteristicMap() {
@@ -25,7 +24,7 @@ BLECharacteristic* BLE::createCharacteristic(std::string const& serviceUuid, std
   return createCharacteristic(
       serviceUuid,
       characteristicUuid,
-      BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY | BLECharacteristic::PROPERTY_INDICATE);
+      BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY);
 }
 
 BLECharacteristic* BLE::createCharacteristic(std::string const& serviceUuid, std::string const& characteristicUuid, uint32_t property) {
@@ -87,37 +86,7 @@ void BLE::setValueUInt16(std::string const& characteristicUuid, uint16_t value) 
   characteristic->notify();
 }
 
-void BLE::setValueUInt32(std::string const& characteristicUuid, uint32_t value) {
-  auto characteristic = m_bleCharacteristicMap.getByUUID(characteristicUuid);
-  if (not characteristic) {
-    return;
-  }
-
-  characteristic->setValue(value);
-  characteristic->notify();
-}
-
-void BLE::setValueInt(std::string const& characteristicUuid, int value) {
-  auto characteristic = m_bleCharacteristicMap.getByUUID(characteristicUuid);
-  if (not characteristic) {
-    return;
-  }
-
-  characteristic->setValue(value);
-  characteristic->notify();
-}
-
 void BLE::setValueFloat(std::string const& characteristicUuid, float value) {
-  auto characteristic = m_bleCharacteristicMap.getByUUID(characteristicUuid);
-  if (not characteristic) {
-    return;
-  }
-
-  characteristic->setValue(value);
-  characteristic->notify();
-}
-
-void BLE::setValueDouble(std::string const& characteristicUuid, double value) {
   auto characteristic = m_bleCharacteristicMap.getByUUID(characteristicUuid);
   if (not characteristic) {
     return;

@@ -7,7 +7,6 @@
 float calcValueDivide256(int val);
 float calcValueMinus40(int val);
 float calcValueDivide10(int val);
-float calcValueDivide10(int val);
 float calcValueDivide16(int val);
 uint8_t calcChecksum(uint8_t const* data, size_t len);
 float calcKPHtoMPH(int val);
