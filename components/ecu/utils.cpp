@@ -40,6 +40,16 @@ uint8_t calcChecksum(uint8_t const* data, size_t len) {
   return checkSum;
 }
 
+uint8_t calcChecksum(uint8_t const* data, size_t start, size_t stop) {
+  uint8_t checkSum = 0;
+
+  for (size_t i = start; i < stop; i++) {
+    checkSum -= data[i];
+  }
+
+  return checkSum;
+}
+
 float calcKPHtoMPH(int val) {
   return val / 1.609344;
 }

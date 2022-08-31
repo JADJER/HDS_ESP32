@@ -5,12 +5,12 @@
 #include "Ecu.hpp"
 #include "utils.hpp"
 #include <Arduino.h>
+#include <atomic>
 #include <iostream>
 
 ECU::ECU(int rx_pin, int tx_pin) : m_dataTable11() {
   m_rx = rx_pin;
   m_tx = tx_pin;
-  m_bufferMaxSize = 128;
 }
 
 ECU::~ECU() = default;
@@ -36,13 +36,7 @@ void ECU::test() const {
 
     address++;
 
-    writeDataAndPrint(dataWithChk, sizeof(dataWithChk));
-    delay(100);
-
-    uint8_t responseData[m_bufferMaxSize];
-    size_t responseDataLen = 0;
-    readDataAndPrint(responseData, responseDataLen);
-    delay(100);
+    sendCommandAndPrint(dataWithChk, sizeof(dataWithChk));
   }
 }
 
@@ -106,30 +100,13 @@ bool ECU::initialize() const {
   std::cout << "Initialize ECU..." << std::endl;
 
   uint8_t wakeupMessage[] = {0xFE, 0x04, 0xFF, 0xFF};
-  uint8_t initMessageRequest[] = {0x72, 0x05, 0x00, 0xF0, 0x99};
-  uint8_t initMessageResponse[] = {0x02, 0x04, 0x00, 0xFA};
-  uint8_t initMessageResponseChecksum = calcChecksum(initMessageResponse, sizeof(initMessageResponse));
+  uint8_t initMessage[] = {0x72, 0x05, 0x00, 0xF0, 0x99};
+//  uint8_t initMessageResponse[] = {0x02, 0x04, 0x00, 0xFA};
 
   Serial2.begin(10400);
 
-  writeDataAndPrint(wakeupMessage, sizeof(wakeupMessage));
-  delay(100);
-
-  writeDataAndPrint(initMessageRequest, sizeof(initMessageRequest));
-  delay(100);
-
-  uint8_t responseData[m_bufferMaxSize];
-  size_t responseDataLen = 0;
-
-  auto isRead = readDataAndPrint(responseData, responseDataLen);
-  if (not isRead) {
-    return false;
-  }
-
-  auto initResponseChecksum = calcChecksum(responseData, responseDataLen);
-  if (initResponseChecksum == initMessageResponseChecksum) {
-    return true;
-  }
+  sendCommand(wakeupMessage, sizeof(wakeupMessage));
+  sendCommandAndRead(initMessage, sizeof(initMessage));
 
   return false;
 }
@@ -139,75 +116,118 @@ void ECU::updateDataFromTable11() {
   uint8_t checkSum = calcChecksum(data, sizeof(data));
   uint8_t dataWithChk[] = {0x72, 0x05, 0x71, 0x11, checkSum};
 
-  writeData(dataWithChk, sizeof(dataWithChk));
+  auto response = sendCommandAndRead(dataWithChk, sizeof(dataWithChk));
+//  0   1    2    3    4   5   6    7   8    9    10   11   12   13   14   15   16   17  18  19  20   21   22   23   24
+//  0x2 0x19 0x71 0x11 0x0 0x0 0x19 0x0 0x3f 0x6a 0x8c 0x45 0x8f 0x61 0xff 0xff 0x77 0x0 0x0 0x0 0x80 0x16 0x1d 0xb7 0x1
 
-  uint8_t responseData[m_bufferMaxSize];
-  size_t responseDataLen = 0;
-
-  auto isRead = readData(responseData, responseDataLen);
-  if (not isRead) {
-    return;
-  }
-
-  m_dataTable11.rpm = (uint16_t) (responseData[9] << 8) + responseData[10];
-  m_dataTable11.tpsVolts = calcValueDivide256(responseData[11]);
-  m_dataTable11.tpsPercent = calcValueDivide16(responseData[12]);
-  m_dataTable11.ectVolts = calcValueDivide256(responseData[13]);
-  m_dataTable11.ectTemp = calcValueMinus40(responseData[14]);
-  m_dataTable11.iatVolts = calcValueDivide256(responseData[15]);
-  m_dataTable11.iatTemp = calcValueMinus40(responseData[16]);
-  m_dataTable11.mapVolts = calcValueDivide256(responseData[17]);
-  m_dataTable11.mapPressure = responseData[18];
-  m_dataTable11.batteryVolts = calcValueDivide10(responseData[21]);
-  m_dataTable11.speed = responseData[22];
+  m_dataTable11.rpm = (uint16_t) (response.data[4] << 8) + response.data[5];
+  m_dataTable11.tpsVolts = calcValueDivide256(response.data[6]);
+  m_dataTable11.tpsPercent = calcValueDivide16(response.data[7]);
+  m_dataTable11.ectVolts = calcValueDivide256(response.data[8]);
+  m_dataTable11.ectTemp = calcValueMinus40(response.data[9]);
+  m_dataTable11.iatVolts = calcValueDivide256(response.data[10]);
+  m_dataTable11.iatTemp = calcValueMinus40(response.data[11]);
+  m_dataTable11.mapVolts = calcValueDivide256(response.data[12]);
+  m_dataTable11.mapPressure = response.data[13];
+  m_dataTable11.batteryVolts = calcValueDivide10(response.data[16]);
+  m_dataTable11.speed = response.data[17];
 }
 
-bool ECU::readData(uint8_t* data, size_t& len) const {
-  len = 0;
-
-  while (Serial2.available() > 0 and len < m_bufferMaxSize) {
-    uint8_t value = Serial2.read();
-    data[len++] = value;
-  }
-
-  if (len == 0) {
-    return false;
-  }
-
-  return true;
-}
-
-void ECU::writeData(uint8_t const* data, size_t len) const {
+void ECU::sendCommand(uint8_t const* data, size_t len) const {
+  //    Write data
   Serial2.write(data, len);
   Serial2.flush();
+
+  //    Delay before read
+  delay(100);
+
+  //    Wait echo
+  while (Serial2.available() < len) {}
+
+  //    Clear receive buffer from echo
+  for (size_t i = 0; i < len; i++) {
+    uint8_t nextValue = Serial2.peek();
+    if (nextValue == data[i]) {
+      Serial2.read();
+    }
+  }
 }
 
-bool ECU::readDataAndPrint(uint8_t* data, size_t& len) const {
-  len = 0;
+CommandResult ECU::sendCommandAndRead(uint8_t const* request, size_t len) const {
+  std::atomic<bool> done(false);
+  uint8_t faultCount = 0;
+  uint8_t const faultCountMax = 5;
 
-  std::cout << "ECU >> ";
-  while (Serial2.available() > 0 and len < m_bufferMaxSize) {
-    uint8_t value = Serial2.read();
+  CommandResult result{};
 
-    data[len++] = value;
-    std::cout << std::hex << "0x" << (int) value << " ";
+  while (not done) {
+    if (faultCount == faultCountMax) {
+      faultCount = 0;
+      initialize();
+    }
+
+    sendCommand(request, len);
+
+    //    Wait confirm from uart
+    while (Serial2.available() < 1) {}
+    uint8_t responseConfirm = Serial2.read();
+
+    //    Wait package len from uart
+    while (Serial2.available() < 1) {}
+    uint8_t responseLength = Serial.read();
+
+    //    Wait command from uart
+    while (Serial2.available() < 1) {}
+    uint8_t responseCommand = Serial.read();
+
+    //    Create buffer for read
+    auto buffer = new uint8_t[responseLength];
+    buffer[0] = responseConfirm;
+    buffer[1] = responseLength;
+    buffer[2] = responseCommand;
+
+    //    Wait package from uart
+    while (Serial2.available() < (responseLength - 3)) {}
+
+    //    Read package data from uart
+    for (size_t i = 3; i < responseLength; i++) {
+      uint8_t value = Serial2.read();
+      result.data[i] = value;
+    }
+
+    uint8_t responseChecksum = result.data[responseLength - 1];
+    uint8_t calculatedChecksum = calcChecksum(result.data, 0, responseLength - 1);
+
+    if (responseChecksum == calculatedChecksum) {
+      done = true;
+    }
+
+    faultCount++;
+
+    result.code = responseConfirm;
+    result.len = responseLength;
+    result.command = responseCommand;
+    result.data = buffer;
+    result.checksum = responseChecksum;
   }
-  std::cout << std::endl;
 
-  if (len == 0) {
-    return false;
-  }
-
-  return true;
+  return result;
 }
 
-void ECU::writeDataAndPrint(uint8_t const* data, size_t len) const {
+CommandResult ECU::sendCommandAndPrint(uint8_t const* data, size_t len) const {
   std::cout << "ECU << ";
   for (size_t i = 0; i < len; i++) {
     std::cout << std::hex << "0x" << (int) data[i] << " ";
   }
   std::cout << std::endl;
 
-  Serial2.write(data, len);
-  Serial2.flush();
+  auto responseData = sendCommandAndRead(data, len);
+
+  std::cout << "ECU >> ";
+  for (size_t i = 0; i < responseData.len; i++) {
+    std::cout << std::hex << "0x" << (int) responseData.data[i] << " ";
+  }
+  std::cout << std::endl;
+
+  return responseData;
 }

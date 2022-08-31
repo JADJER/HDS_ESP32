@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "CommandResult.hpp"
 #include "DataTable11.hpp"
 
 class ECU {
@@ -35,7 +36,6 @@ class ECU {
  private:
   int m_rx;
   int m_tx;
-  uint8_t m_bufferMaxSize;
   DataTable11 m_dataTable11;
 
  private:
@@ -46,10 +46,7 @@ class ECU {
   void updateDataFromTable11();
 
  private:
-  bool readData(uint8_t* data, size_t& len) const;
-  void writeData(uint8_t const* data, size_t len) const;
-
- private:
-  bool readDataAndPrint(uint8_t* data, size_t& len) const;
-  void writeDataAndPrint(uint8_t const* data, size_t len) const;
+  void sendCommand(uint8_t const* data, size_t len) const;
+  CommandResult sendCommandAndRead(uint8_t const* data, size_t len) const;
+  CommandResult sendCommandAndPrint(uint8_t const* data, size_t len) const;
 };
