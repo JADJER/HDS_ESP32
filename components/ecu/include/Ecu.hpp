@@ -5,12 +5,13 @@
 #pragma once
 
 #include "CommandResult.hpp"
+#include "Communication.hpp"
 #include "DataTable11.hpp"
 
-class ECU {
+class ECU : public Communication {
  public:
   ECU(int rx_pin, int tx_pin);
-  ~ECU();
+  ~ECU() override;
 
  public:
   bool connect() const;
@@ -36,17 +37,17 @@ class ECU {
  private:
   int m_rx;
   int m_tx;
+  size_t m_bufferMaxSize;
   DataTable11 m_dataTable11;
 
  private:
   void wakeup() const;
-  bool initialize() const;
+  bool initialize() const override;
 
  private:
   void updateDataFromTable11();
 
  private:
-  void sendCommand(uint8_t const* data, size_t len) const;
-  CommandResult sendCommandAndRead(uint8_t const* data, size_t len) const;
-  CommandResult sendCommandAndPrint(uint8_t const* data, size_t len) const;
+  CommandResult* readData(bool print) const override;
+  void writeData(uint8_t const* data, size_t len, bool print) const override;
 };
