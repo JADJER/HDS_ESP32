@@ -1,16 +1,16 @@
 //
-// Created by jadjer on 30.08.22.
+// Created by jadjer on 01.09.22.
 //
 
 #pragma once
 
 #include <Arduino.h>
 
-struct DataTable11 {
-  uint16_t rpm;
-  uint8_t speed;
+struct EngineData {
+  int rpm;
+  int speed;
 
-  float tpsPercent;
+  int tpsPercent;
   float tpsVolts;
 
   float ectTemp;

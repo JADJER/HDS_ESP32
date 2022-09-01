@@ -30,20 +30,10 @@ float calcValueDivide16(int val) {
   return (val / 16) * 10;
 }
 
-uint8_t calcChecksum(uint8_t const* data, size_t len) {
-  uint8_t checkSum = 0;
+uint16_t calcChecksum(uint8_t const* data, size_t len) {
+  uint16_t checkSum = 0;
 
   for (size_t i = 0; i < len; i++) {
-    checkSum -= data[i];
-  }
-
-  return checkSum;
-}
-
-uint8_t calcChecksum(uint8_t const* data, size_t start, size_t stop) {
-  uint8_t checkSum = 0;
-
-  for (size_t i = start; i < stop; i++) {
     checkSum -= data[i];
   }
 

@@ -6,27 +6,27 @@
 #include <Arduino.h>
 #include <iostream>
 
-Controller::Controller() : m_ble("HDS"), m_ecu(16, 17), m_indicator(2) {
-  m_ble.createService("d6f3f0a5-e35b-463e-834b-d7a69cb9ba30"); //BASE
-  m_ble.createCharacteristic("d6f3f0a5-e35b-463e-834b-d7a69cb9ba30", "96902795-9837-4345-949f-706cdb7b76f6"); //RPPM
-  m_ble.createCharacteristic("d6f3f0a5-e35b-463e-834b-d7a69cb9ba30", "ce914ca7-5b8b-4133-af2f-27a15f7c7d89"); //SPEED
-  m_ble.createCharacteristic("d6f3f0a5-e35b-463e-834b-d7a69cb9ba30", "41ea8aa3-9541-4c36-949e-45d63a0da48b"); //BATTERY
+Controller::Controller() : m_ble("HDS"), m_ecu(16, 17), m_engine(m_ecu), m_indicator(2) {
+  m_ble.createService("d6f3f0a5-e35b-463e-834b-d7a69cb9ba30");                                               //BASE
+  m_ble.createCharacteristic("d6f3f0a5-e35b-463e-834b-d7a69cb9ba30", "96902795-9837-4345-949f-706cdb7b76f6");//RPPM
+  m_ble.createCharacteristic("d6f3f0a5-e35b-463e-834b-d7a69cb9ba30", "ce914ca7-5b8b-4133-af2f-27a15f7c7d89");//SPEED
+  m_ble.createCharacteristic("d6f3f0a5-e35b-463e-834b-d7a69cb9ba30", "41ea8aa3-9541-4c36-949e-45d63a0da48b");//BATTERY
 
-  m_ble.createService("2b3c1105-ff38-4963-b5af-c2631372f9ad"); //TPS
-  m_ble.createCharacteristic("2b3c1105-ff38-4963-b5af-c2631372f9ad", "a4c6be92-0060-4702-a63a-5d7eb122eac8"); //TPS_PERCENT
-  m_ble.createCharacteristic("2b3c1105-ff38-4963-b5af-c2631372f9ad", "2b2ee537-9bb5-4cd3-9e44-72122f1c82ca"); //TPS_VOLTAGE
+  m_ble.createService("2b3c1105-ff38-4963-b5af-c2631372f9ad");                                               //TPS
+  m_ble.createCharacteristic("2b3c1105-ff38-4963-b5af-c2631372f9ad", "a4c6be92-0060-4702-a63a-5d7eb122eac8");//TPS_PERCENT
+  m_ble.createCharacteristic("2b3c1105-ff38-4963-b5af-c2631372f9ad", "2b2ee537-9bb5-4cd3-9e44-72122f1c82ca");//TPS_VOLTAGE
 
-  m_ble.createService("7cdd9e93-844f-4313-b500-91e8a374c8a7"); //ECT
-  m_ble.createCharacteristic("7cdd9e93-844f-4313-b500-91e8a374c8a7", "ddbea267-80cb-4bc3-992a-159bb45b32d2"); //ECT_TEMP
-  m_ble.createCharacteristic("7cdd9e93-844f-4313-b500-91e8a374c8a7", "3bf76097-4b24-428a-81a2-bb2f073e273e"); //ECT_VOLTAGE
+  m_ble.createService("7cdd9e93-844f-4313-b500-91e8a374c8a7");                                               //ECT
+  m_ble.createCharacteristic("7cdd9e93-844f-4313-b500-91e8a374c8a7", "ddbea267-80cb-4bc3-992a-159bb45b32d2");//ECT_TEMP
+  m_ble.createCharacteristic("7cdd9e93-844f-4313-b500-91e8a374c8a7", "3bf76097-4b24-428a-81a2-bb2f073e273e");//ECT_VOLTAGE
 
-  m_ble.createService("1311712d-1ef6-4161-be8e-6b60aab4c643"); //IAT
-  m_ble.createCharacteristic("1311712d-1ef6-4161-be8e-6b60aab4c643", "6b9679b7-3fc4-4f30-ae75-df2f2179dfca"); //IAT_TEMP
-  m_ble.createCharacteristic("1311712d-1ef6-4161-be8e-6b60aab4c643", "63c6853f-1d91-49eb-bbe5-ec4a05174bdc"); //IAT_VOLTAGE
+  m_ble.createService("1311712d-1ef6-4161-be8e-6b60aab4c643");                                               //IAT
+  m_ble.createCharacteristic("1311712d-1ef6-4161-be8e-6b60aab4c643", "6b9679b7-3fc4-4f30-ae75-df2f2179dfca");//IAT_TEMP
+  m_ble.createCharacteristic("1311712d-1ef6-4161-be8e-6b60aab4c643", "63c6853f-1d91-49eb-bbe5-ec4a05174bdc");//IAT_VOLTAGE
 
-  m_ble.createService("5ed5a50d-7b41-4bd5-a937-dbd58b5e469f"); //MAP
-  m_ble.createCharacteristic("5ed5a50d-7b41-4bd5-a937-dbd58b5e469f", "96f9b873-6c05-42d6-8245-06abffe4abfb"); //MAP_PRESSURE
-  m_ble.createCharacteristic("5ed5a50d-7b41-4bd5-a937-dbd58b5e469f", "b7df0786-d4c3-43d9-a1ff-ba98af91ce52"); //MAP_VOLTAGE
+  m_ble.createService("5ed5a50d-7b41-4bd5-a937-dbd58b5e469f");                                               //MAP
+  m_ble.createCharacteristic("5ed5a50d-7b41-4bd5-a937-dbd58b5e469f", "96f9b873-6c05-42d6-8245-06abffe4abfb");//MAP_PRESSURE
+  m_ble.createCharacteristic("5ed5a50d-7b41-4bd5-a937-dbd58b5e469f", "b7df0786-d4c3-43d9-a1ff-ba98af91ce52");//MAP_VOLTAGE
 
   m_ble.start();
   m_ble.advertising();
@@ -55,21 +55,21 @@ Controller::~Controller() = default;
 }
 
 void Controller::spinOnce() {
-  m_ecu.spinOnce();
+  m_engine.spinOnce();
 
-  m_ble.setValueUInt16("96902795-9837-4345-949f-706cdb7b76f6", m_ecu.getRpm());
-  m_ble.setValueUInt16("ce914ca7-5b8b-4133-af2f-27a15f7c7d89", m_ecu.getSpeed());
-  m_ble.setValueFloat("41ea8aa3-9541-4c36-949e-45d63a0da48b", m_ecu.getBatteryVolts());
+  m_ble.setValueString("96902795-9837-4345-949f-706cdb7b76f6", std::to_string(m_engine.getRpm()));
+  m_ble.setValueString("ce914ca7-5b8b-4133-af2f-27a15f7c7d89", std::to_string(m_engine.getSpeed()));
+  m_ble.setValueString("41ea8aa3-9541-4c36-949e-45d63a0da48b", std::to_string(m_engine.getBatteryVolts()));
 
-  m_ble.setValueFloat("a4c6be92-0060-4702-a63a-5d7eb122eac8", m_ecu.getTpsPercent());
-  m_ble.setValueFloat("2b2ee537-9bb5-4cd3-9e44-72122f1c82ca", m_ecu.getTpsVolts());
+  m_ble.setValueString("a4c6be92-0060-4702-a63a-5d7eb122eac8", std::to_string(m_engine.getTpsPercent()));
+  m_ble.setValueString("2b2ee537-9bb5-4cd3-9e44-72122f1c82ca", std::to_string(m_engine.getTpsVolts()));
 
-  m_ble.setValueFloat("ddbea267-80cb-4bc3-992a-159bb45b32d2", m_ecu.getEctTemp());
-  m_ble.setValueFloat("3bf76097-4b24-428a-81a2-bb2f073e273e", m_ecu.getEctVolts());
+  m_ble.setValueString("ddbea267-80cb-4bc3-992a-159bb45b32d2", std::to_string(m_engine.getEctTemp()));
+  m_ble.setValueString("3bf76097-4b24-428a-81a2-bb2f073e273e", std::to_string(m_engine.getEctVolts()));
 
-  m_ble.setValueFloat("6b9679b7-3fc4-4f30-ae75-df2f2179dfca", m_ecu.getIatTemp());
-  m_ble.setValueFloat("63c6853f-1d91-49eb-bbe5-ec4a05174bdc", m_ecu.getIatVolts());
+  m_ble.setValueString("6b9679b7-3fc4-4f30-ae75-df2f2179dfca", std::to_string(m_engine.getIatTemp()));
+  m_ble.setValueString("63c6853f-1d91-49eb-bbe5-ec4a05174bdc", std::to_string(m_engine.getIatVolts()));
 
-  m_ble.setValueFloat("96f9b873-6c05-42d6-8245-06abffe4abfb", m_ecu.getMapPressure());
-  m_ble.setValueFloat("b7df0786-d4c3-43d9-a1ff-ba98af91ce52", m_ecu.getMapVolts());
+  m_ble.setValueString("96f9b873-6c05-42d6-8245-06abffe4abfb", std::to_string(m_engine.getMapPressure()));
+  m_ble.setValueString("b7df0786-d4c3-43d9-a1ff-ba98af91ce52", std::to_string(m_engine.getMapVolts()));
 }

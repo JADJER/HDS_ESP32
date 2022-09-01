@@ -7,6 +7,7 @@
 #include "Ble.hpp"
 #include "Ecu.hpp"
 #include "Indicator.hpp"
+#include "Engine.hpp"
 
 class Controller {
  public:
@@ -19,6 +20,7 @@ class Controller {
  private:
   BLE m_ble;
   ECU m_ecu;
+  Engine m_engine;
   Indicator m_indicator;
 
  private:

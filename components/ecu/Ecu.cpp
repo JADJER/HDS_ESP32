@@ -5,10 +5,9 @@
 #include "Ecu.hpp"
 #include "utils.hpp"
 #include <Arduino.h>
-#include <atomic>
 #include <iostream>
 
-ECU::ECU(int rx_pin, int tx_pin) : m_dataTable11() {
+ECU::ECU(int rx_pin, int tx_pin) {
   m_rx = rx_pin;
   m_tx = tx_pin;
   m_bufferMaxSize = 128;
@@ -23,10 +22,6 @@ bool ECU::connect() const {
   return initialize();
 }
 
-void ECU::spinOnce() {
-  updateDataFromTable11();
-}
-
 void ECU::test() const {
   uint8_t address = 0x0;
 
@@ -37,53 +32,9 @@ void ECU::test() const {
 
     address++;
 
-    writeData(dataWithChk, sizeof(dataWithChk), true);
-    readData(true);
+    writeData(dataWithChk, sizeof(dataWithChk));
+    readData();
   }
-}
-
-uint16_t ECU::getRpm() const {
-  return m_dataTable11.rpm;
-}
-
-uint8_t ECU::getSpeed() const {
-  return m_dataTable11.speed;
-}
-
-float ECU::getTpsPercent() const {
-  return m_dataTable11.tpsPercent;
-}
-
-float ECU::getTpsVolts() const {
-  return m_dataTable11.tpsVolts;
-}
-
-float ECU::getEctTemp() const {
-  return m_dataTable11.ectTemp;
-}
-
-float ECU::getEctVolts() const {
-  return m_dataTable11.ectVolts;
-}
-
-float ECU::getIatTemp() const {
-  return m_dataTable11.iatTemp;
-}
-
-float ECU::getIatVolts() const {
-  return m_dataTable11.iatVolts;
-}
-
-float ECU::getBatteryVolts() const {
-  return m_dataTable11.batteryVolts;
-}
-
-float ECU::getMapPressure() const {
-  return m_dataTable11.mapPressure;
-}
-
-float ECU::getMapVolts() const {
-  return m_dataTable11.mapVolts;
 }
 
 void ECU::wakeup() const {
@@ -106,10 +57,10 @@ bool ECU::initialize() const {
 
   Serial2.begin(10400);
 
-  writeData(wakeupMessage, sizeof(wakeupMessage), true);
-  writeData(initMessage, sizeof(initMessage), true);
+  writeData(wakeupMessage, sizeof(wakeupMessage));
+  writeData(initMessage, sizeof(initMessage));
 
-  auto data = readData(true);
+  auto data = readData();
 
   if (data == nullptr) { return false; }
   if (data->code != 0x02) { return false; }
@@ -120,31 +71,7 @@ bool ECU::initialize() const {
   return true;
 }
 
-void ECU::updateDataFromTable11() {
-  uint8_t message[] = {0x72, 0x05, 0x71, 0x11};
-  uint8_t checksum = calcChecksum(message, sizeof(message));
-  uint8_t messageWithChecksum[] = {0x72, 0x05, 0x71, 0x11, checksum};
-
-  writeData(messageWithChecksum, sizeof(messageWithChecksum), false);
-
-  auto response = readData(false);
-  //  0   1    2    3    4   5   6    7   8    9    10   11   12   13   14   15   16   17  18  19  20   21   22   23   24
-  //  0x2 0x19 0x71 0x11 0x0 0x0 0x19 0x0 0x3f 0x6a 0x8c 0x45 0x8f 0x61 0xff 0xff 0x77 0x0 0x0 0x0 0x80 0x16 0x1d 0xb7 0x1
-
-  m_dataTable11.rpm = (uint16_t) (response->data[4] << 8) + response->data[5];
-  m_dataTable11.tpsVolts = calcValueDivide256(response->data[6]);
-  m_dataTable11.tpsPercent = calcValueDivide16(response->data[7]);
-  m_dataTable11.ectVolts = calcValueDivide256(response->data[8]);
-  m_dataTable11.ectTemp = calcValueMinus40(response->data[9]);
-  m_dataTable11.iatVolts = calcValueDivide256(response->data[10]);
-  m_dataTable11.iatTemp = calcValueMinus40(response->data[11]);
-  m_dataTable11.mapVolts = calcValueDivide256(response->data[12]);
-  m_dataTable11.mapPressure = response->data[13];
-  m_dataTable11.batteryVolts = calcValueDivide10(response->data[16]);
-  m_dataTable11.speed = response->data[17];
-}
-
-CommandResult* ECU::readData(bool print) const {
+CommandResult* ECU::readData() const {
   //    Wait minimum package from uart
   while (Serial2.available() < 4) {
     delay(100);
@@ -160,14 +87,17 @@ CommandResult* ECU::readData(bool print) const {
   buffer[1] = responseLength;
   buffer[2] = responseCommand;
 
-  if (responseLength > m_bufferMaxSize) {
-    std::cerr << "The message is too big (size: " << std::hex << "0x" << (int) responseLength << ")" << std::endl;
+  if (responseLength == 0) {
+    std::cerr << "ECU >> The message is very small (size: 0x" << std::hex << (int) responseLength << ")" << std::endl;
+    return nullptr;
+  }
 
+  if (responseLength > m_bufferMaxSize) {
+    std::cerr << "ECU >> The message is too big (size: 0x" << std::hex << (int) responseLength << "): ";
     for (size_t i = 0; i < responseLength; i++) {
-      std::cerr << std::hex << "0x" << (int) buffer[i] << " ";
+      std::cerr << "0x" << std::hex << (int) buffer[i] << " ";
     }
     std::cerr << std::endl;
-
     return nullptr;
   }
 
@@ -183,16 +113,14 @@ CommandResult* ECU::readData(bool print) const {
   }
 
   uint8_t responseChecksum = buffer[responseLength - 1];
-  uint8_t calculatedChecksum = calcChecksum(buffer, 0, responseLength - 1);
+  uint8_t calculatedChecksum = calcChecksum(buffer, responseLength - 1);
 
   if (responseChecksum != calculatedChecksum) {
-    std::cerr << "The checksum does not match" << std::endl;
-
+    std::cerr << "ECU >> The checksum does not match (0x" << std::hex << (int) calculatedChecksum << "): ";
     for (size_t i = 0; i < responseLength; i++) {
-      std::cerr << std::hex << "0x" << (int) buffer[i] << " ";
+      std::cerr << "0x" << std::hex << (int) buffer[i] << " ";
     }
     std::cerr << std::endl;
-
     return nullptr;
   }
 
@@ -203,28 +131,18 @@ CommandResult* ECU::readData(bool print) const {
   result->data = buffer;
   result->len = responseLength;
 
-  if (print) {
-    std::cout << "ECU >> ";
-    for (size_t i = 0; i < responseLength; i++) {
-      std::cout << std::hex << "0x" << (int) buffer[i] << " ";
-    }
-    std::cout << std::endl;
+  std::cout << "ECU >> ";
+  for (size_t i = 0; i < responseLength; i++) {
+    std::cout << "0x" << std::hex << (int) buffer[i] << " ";
   }
+  std::cout << std::endl;
 
   return result;
 }
 
-void ECU::writeData(uint8_t const* data, size_t len, bool print) const {
+void ECU::writeData(uint8_t const* data, size_t len) const {
   Serial2.flush(false);
   delay(100);
-
-  if (print) {
-    std::cout << "ECU << ";
-    for (size_t i = 0; i < len; i++) {
-      std::cout << std::hex << "0x" << (int) data[i] << " ";
-    }
-    std::cout << std::endl;
-  }
 
   Serial2.write(data, len);
   delay(100);
@@ -239,4 +157,10 @@ void ECU::writeData(uint8_t const* data, size_t len, bool print) const {
       Serial2.read();
     }
   }
+
+  std::cout << "ECU << ";
+  for (size_t i = 0; i < len; i++) {
+    std::cout << "0x" << std::hex << (int) data[i] << " ";
+  }
+  std::cout << std::endl;
 }
