@@ -14,7 +14,6 @@ class ECU : public ICommunication {
 
  public:
   bool connect() const;
-  void test() const;
 
  public:
   CommandResult* readData() const override;

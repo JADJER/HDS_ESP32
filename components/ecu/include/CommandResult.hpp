@@ -12,4 +12,6 @@ struct CommandResult {
   uint8_t checksum;
   uint8_t* data;
   size_t len;
+  uint8_t* payload;
+  size_t payload_len;
 };

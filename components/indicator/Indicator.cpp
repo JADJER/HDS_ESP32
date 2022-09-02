@@ -8,6 +8,7 @@
 
 Indicator::Indicator(int pin) : m_enable(false) {
   m_led = pin;
+  m_delay = 100;
 
   pinMode(m_led, OUTPUT);
 }
@@ -29,14 +30,18 @@ void Indicator::enable(bool enable) {
 }
 
 void Indicator::blink(int delayMs) {
-  m_enable = true;
+  m_delay = delayMs;
 
-  m_thread = std::thread([=]{
+  if (m_enable) { return; }
+
+  m_enable = true;
+  m_thread = std::thread([=] {
     while (m_enable) {
       digitalWrite(m_led, 1);
-      delay(delayMs);
+      delay(m_delay);
+
       digitalWrite(m_led, 0);
-      delay(delayMs);
+      delay(m_delay);
     }
   });
 }

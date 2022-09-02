@@ -18,6 +18,7 @@ class Indicator {
 
  private:
   int m_led;
+  int m_delay;
   std::thread m_thread;
   std::atomic<bool> m_enable;
 };

@@ -6,8 +6,8 @@
 
 #include "Ble.hpp"
 #include "Ecu.hpp"
-#include "Indicator.hpp"
 #include "Engine.hpp"
+#include "Indicator.hpp"
 
 class Controller {
  public:
@@ -18,6 +18,7 @@ class Controller {
   [[noreturn]] void spin();
 
  private:
+  bool m_ecuConnected;
   BLE m_ble;
   ECU m_ecu;
   Engine m_engine;

@@ -22,21 +22,6 @@ bool ECU::connect() const {
   return initialize();
 }
 
-void ECU::test() const {
-  uint8_t address = 0x0;
-
-  for (size_t i = 0; i <= 255; i++) {
-    uint8_t data[] = {0x72, 0x05, 0x71, address};
-    uint8_t checkSum = calcChecksum(data, sizeof(data));
-    uint8_t dataWithChk[] = {0x72, 0x05, 0x71, address, checkSum};
-
-    address++;
-
-    writeData(dataWithChk, sizeof(dataWithChk));
-    readData();
-  }
-}
-
 void ECU::wakeup() const {
   std::cout << "Wakeup ECU..." << std::endl;
 
@@ -74,53 +59,45 @@ bool ECU::initialize() const {
 CommandResult* ECU::readData() const {
   //    Wait minimum package from uart
   while (Serial2.available() < 4) {
-    delay(100);
+    delay(1);
   }
 
   uint8_t responseConfirm = Serial2.read();
   uint8_t responseLength = Serial2.read();
   uint8_t responseCommand = Serial2.read();
 
-  //    Create buffer for read
-  auto buffer = new uint8_t[responseLength];
-  buffer[0] = responseConfirm;
-  buffer[1] = responseLength;
-  buffer[2] = responseCommand;
-
   if (responseLength == 0) {
-    std::cerr << "ECU >> The message is very small (size: 0x" << std::hex << (int) responseLength << ")" << std::endl;
+    std::cerr << "ECU >> The message is very small (size: 0x" << std::hex << static_cast<int>(responseLength) << ")" << std::endl;
     return nullptr;
   }
 
   if (responseLength > m_bufferMaxSize) {
-    std::cerr << "ECU >> The message is too big (size: 0x" << std::hex << (int) responseLength << "): ";
-    for (size_t i = 0; i < responseLength; i++) {
-      std::cerr << "0x" << std::hex << (int) buffer[i] << " ";
-    }
-    std::cerr << std::endl;
+    std::cerr << "ECU >> The message is too big (size: 0x" << std::hex << static_cast<int>(responseLength) << ")" << std::endl;
     return nullptr;
   }
 
+  //    Create buffer for read
+  auto data = new uint8_t[responseLength];
+  data[0] = responseConfirm;
+  data[1] = responseLength;
+  data[2] = responseCommand;
+
   //    Wait full package from uart
   while (Serial2.available() < (responseLength - 3)) {
-    delay(100);
+    delay(1);
   }
 
   //    Read package data from uart
   for (size_t i = 3; i < responseLength; i++) {
     uint8_t value = Serial2.read();
-    buffer[i] = value;
+    data[i] = value;
   }
 
-  uint8_t responseChecksum = buffer[responseLength - 1];
-  uint8_t calculatedChecksum = calcChecksum(buffer, responseLength - 1);
+  uint8_t responseChecksum = data[responseLength - 1];
+  uint8_t calculatedChecksum = calcChecksum(data, responseLength - 1);
 
   if (responseChecksum != calculatedChecksum) {
-    std::cerr << "ECU >> The checksum does not match (0x" << std::hex << (int) calculatedChecksum << "): ";
-    for (size_t i = 0; i < responseLength; i++) {
-      std::cerr << "0x" << std::hex << (int) buffer[i] << " ";
-    }
-    std::cerr << std::endl;
+    std::cerr << "ECU >> The checksum does not match" << std::endl;
     return nullptr;
   }
 
@@ -128,12 +105,12 @@ CommandResult* ECU::readData() const {
   result->code = responseConfirm;
   result->command = responseCommand;
   result->checksum = responseChecksum;
-  result->data = buffer;
+  result->data = data;
   result->len = responseLength;
 
   std::cout << "ECU >> ";
   for (size_t i = 0; i < responseLength; i++) {
-    std::cout << "0x" << std::hex << (int) buffer[i] << " ";
+    std::cout << "0x" << std::hex << static_cast<int>(data[i]) << " ";
   }
   std::cout << std::endl;
 
@@ -142,13 +119,10 @@ CommandResult* ECU::readData() const {
 
 void ECU::writeData(uint8_t const* data, size_t len) const {
   Serial2.flush(false);
-  delay(100);
-
   Serial2.write(data, len);
-  delay(100);
 
   while (Serial2.available() < len) {
-    delay(100);
+    delay(1);
   }
 
   for (size_t i = 0; i < len; i++) {
@@ -160,7 +134,7 @@ void ECU::writeData(uint8_t const* data, size_t len) const {
 
   std::cout << "ECU << ";
   for (size_t i = 0; i < len; i++) {
-    std::cout << "0x" << std::hex << (int) data[i] << " ";
+    std::cout << "0x" << std::hex << static_cast<int>(data[i]) << " ";
   }
   std::cout << std::endl;
 }

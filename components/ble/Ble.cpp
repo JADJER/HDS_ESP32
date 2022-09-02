@@ -13,32 +13,18 @@ BLE::BLE(std::string const& name) : m_bleCharacteristicMap() {
 
 BLE::~BLE() = default;
 
-BLEService* BLE::createService(std::string const& uuid) {
-  auto service = m_server->createService(uuid);
-  m_bleServiceMap.setByUUID(uuid, service);
+BLEService* BLE::createService(std::string const& serviceUuid, std::vector<std::string> const& characteristicsUuid) {
+  auto service = m_server->createService(serviceUuid, characteristicsUuid.size() * 10);
+  m_bleServiceMap.setByUUID(serviceUuid, service);
 
-  return service;
-}
+  for (auto& characteristicUuid : characteristicsUuid) {
+    auto characteristic = service->createCharacteristic(characteristicUuid, BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY);
+    m_bleCharacteristicMap.setByUUID(characteristic, characteristicUuid);
 
-BLECharacteristic* BLE::createCharacteristic(std::string const& serviceUuid, std::string const& characteristicUuid) {
-  return createCharacteristic(
-      serviceUuid,
-      characteristicUuid,
-      BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY);
-}
-
-BLECharacteristic* BLE::createCharacteristic(std::string const& serviceUuid, std::string const& characteristicUuid, uint32_t property) {
-  auto service = m_bleServiceMap.getByUUID(serviceUuid);
-  if (not service) {
-    return nullptr;
+    characteristic->addDescriptor(new BLE2902());
   }
 
-  auto characteristic = service->createCharacteristic(characteristicUuid, property);
-  m_bleCharacteristicMap.setByUUID(characteristic, characteristicUuid);
-
-  characteristic->addDescriptor(new BLE2902());
-
-  return characteristic;
+  return service;
 }
 
 void BLE::start() {
