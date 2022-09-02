@@ -43,6 +43,9 @@ bool ECU::initialize() const {
   Serial2.begin(10400);
 
   writeData(wakeupMessage, sizeof(wakeupMessage));
+
+  delay(100);
+
   writeData(initMessage, sizeof(initMessage));
 
   auto data = readData();
