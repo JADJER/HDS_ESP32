@@ -42,10 +42,12 @@ bool ECU::initialize() const {
 
   Serial2.begin(10400);
 
+  std::cout << "Send wakeup message..." << std::endl;
   writeData(wakeupMessage, sizeof(wakeupMessage));
 
   delay(100);
 
+  std::cout << "Send init message..." << std::endl;
   writeData(initMessage, sizeof(initMessage));
 
   auto data = readData();

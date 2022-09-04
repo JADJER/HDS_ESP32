@@ -14,7 +14,7 @@ struct EngineData {
   int speed;
   float batteryVolts;
 
-  int tpsPercent;
+  float tpsPercent;
   float tpsVolts;
 
   float ectTemp;

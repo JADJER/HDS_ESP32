@@ -149,12 +149,16 @@ bool Engine::updateDataFromTable10() {
     return false;
   }
 
+  if (response->len < 21) {
+    return false;
+  }
+
   //  0   1    2    3     4   5     6    7     8    9      10   11     12   13    14   15    16     17    18  19    20    21
   //  0x2 0x16 0x71 0x10 {0x0 0x0} {0x18 0x0} {0x1b 0x8e} {0x87 0x47} {0x90 0x62} 0xff 0xff {0x77} {0x0} {0x0 0x0} {0x80} 0xf1
 
   m_data.rpm = (response->data[4] << 8) + response->data[5];
   m_data.tpsVolts = calcValueDivide256(response->data[6]);
-  m_data.tpsPercent = static_cast<int>(calcValueDivide16(response->data[7]));
+  m_data.tpsPercent = calcValueDivide16(response->data[7]);
   m_data.ectVolts = calcValueDivide256(response->data[8]);
   m_data.ectTemp = calcValueMinus40(response->data[9]);
   m_data.iatVolts = calcValueDivide256(response->data[10]);
@@ -176,12 +180,16 @@ bool Engine::updateDataFromTable11() {
     return false;
   }
 
+  if (response->len < 24) {
+    return false;
+  }
+
   //  0   1    2    3     4   5      6    7     8    9      10   11     12   13    14   15    16     17    18  19     20     21     22     23    24
   //  0x2 0x19 0x71 0x11 {0x1 0x3c} {0x1a 0x0} {0xac 0x38} {0xac 0x37} {0x7c 0x53} 0xff 0xff {0x60} {0x0} {0xb 0x1c} {0x94} {0x27} {0x2d} {0x2b} 0xde
 
   m_data.rpm = (response->data[4] << 8) + response->data[5];
   m_data.tpsVolts = calcValueDivide256(response->data[6]);
-  m_data.tpsPercent = static_cast<int>(calcValueDivide16(response->data[7]));
+  m_data.tpsPercent = calcValueDivide16(response->data[7]);
   m_data.ectVolts = calcValueDivide256(response->data[8]);
   m_data.ectTemp = calcValueMinus40(response->data[9]);
   m_data.iatVolts = calcValueDivide256(response->data[10]);
@@ -206,6 +214,10 @@ bool Engine::updateDataFromTable20() {
     return false;
   }
 
+  if (response->len < 7) {
+    return false;
+  }
+
   (void) response->data[4];
   (void) response->data[5];
   (void) response->data[6];
@@ -216,6 +228,10 @@ bool Engine::updateDataFromTable20() {
 bool Engine::updateDataFromTable21() {
   auto response = updateDataFromTable(0x21);
   if (response == nullptr) {
+    return false;
+  }
+
+  if (response->len < 10) {
     return false;
   }
 
