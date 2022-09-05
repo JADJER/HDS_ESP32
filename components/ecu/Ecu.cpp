@@ -45,7 +45,7 @@ bool ECU::initialize() const {
   std::cout << "Send wakeup message..." << std::endl;
   writeData(wakeupMessage, sizeof(wakeupMessage));
 
-  delay(100);
+  delay(20);
 
   std::cout << "Send init message..." << std::endl;
   writeData(initMessage, sizeof(initMessage));
