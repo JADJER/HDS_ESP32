@@ -1,145 +1,207 @@
 //
-// Created by jadjer on 24.08.22.
+// Created by jadjer on 01.09.22.
 //
 
 #include "Ecu.hpp"
 #include "utils.hpp"
-#include <Arduino.h>
-#include <iostream>
 
-ECU::ECU(int rx_pin, int tx_pin) {
-  m_rx = rx_pin;
-  m_tx = tx_pin;
-  m_bufferMaxSize = 128;
+Ecu::Ecu(ICommunication& communication)
+    : m_communication(communication), m_vehicleData(), m_engineData(), m_sensorsData(), m_errorData(), m_unknownData() {
+
+  m_enableTable10 = false;
+  m_enableTable11 = false;
+  m_enableTable20 = false;
+  m_enableTable21 = false;
 }
 
-ECU::~ECU() = default;
+void Ecu::detectActiveTables() {
+  updateDataFromTable0();
 
-bool ECU::connect() const {
-  std::cout << "Connect to ECU:" << std::endl;
-
-  wakeup();
-  return initialize();
+  if (updateDataFromTable10()) { m_enableTable10 = true; }
+  if (updateDataFromTable11()) { m_enableTable11 = true; }
+  if (updateDataFromTable20()) { m_enableTable20 = true; }
+  if (updateDataFromTable21()) { m_enableTable21 = true; }
 }
 
-void ECU::wakeup() const {
-  std::cout << "Wakeup ECU..." << std::endl;
+void Ecu::test() const {
+  uint8_t address = 0x0;
 
-  pinMode(m_tx, OUTPUT);
+  for (size_t i = 0; i <= 255; i++) {
+    uint8_t message[5] = {0x72, 0x05, 0x71, address, 0x00};
+    message[4] = calcChecksum(message, 4);
 
-  digitalWrite(m_tx, LOW);
-  delay(70);
+    address++;
 
-  digitalWrite(m_tx, HIGH);
-  delay(130);
+    m_communication.writeData(message, 5);
+    m_communication.readData();
+  }
 }
 
-bool ECU::initialize() const {
-  std::cout << "Initialize ECU..." << std::endl;
+std::string Ecu::getId() const {
+  return m_id;
+}
 
-  uint8_t wakeupMessage[] = {0xFE, 0x04, 0xFF, 0xFF};
-  uint8_t initMessage[] = {0x72, 0x05, 0x00, 0xF0, 0x99};
+EngineData Ecu::getEngineData() const {
+  return m_engineData;
+}
 
-  Serial2.begin(10400);
+SensorsData Ecu::getSensorsData() const {
+  return m_sensorsData;
+}
 
-  std::cout << "Send wakeup message..." << std::endl;
-  writeData(wakeupMessage, sizeof(wakeupMessage));
+VehicleData Ecu::getVehicleData() const {
+  return m_vehicleData;
+}
 
-  delay(20);
+ErrorData Ecu::getErrorData() const {
+  return m_errorData;
+}
 
-  std::cout << "Send init message..." << std::endl;
-  writeData(initMessage, sizeof(initMessage));
+UnknownData Ecu::getUnknownData() const {
+  return m_unknownData;
+}
 
-  auto data = readData();
+void Ecu::spinOnce() {
+  if (m_enableTable10) { updateDataFromTable10(); }
+  if (m_enableTable11) { updateDataFromTable11(); }
+  if (m_enableTable20) { updateDataFromTable20(); }
+  if (m_enableTable21) { updateDataFromTable21(); }
 
-  if (data == nullptr) { return false; }
-  if (data->code != 0x02) { return false; }
-  if (data->len != 0x04) { return false; }
-  if (data->command != 0x00) { return false; }
-  if (data->checksum != 0xFA) { return false; }
+  updateDataFromTableD0();
+  updateDataFromTableD1();
+}
+
+CommandResult* Ecu::updateDataFromTable(uint8_t table) const {
+  uint8_t message[5] = {0x72, 0x05, 0x71, table, 0x00};
+  message[4] = calcChecksum(message, 4);
+
+  m_communication.writeData(message, 5);
+
+  return m_communication.readData();
+}
+
+bool Ecu::updateDataFromTable0() {
+  auto response = updateDataFromTable(0x0);
+  if (response == nullptr) { return false; }
+  if (response->len != 0xf) { return false; }
+
+  for (size_t i = 4; i < response->len - 1; i++) {
+    m_id += std::to_string(static_cast<int>(response->data[i]));
+  }
 
   return true;
 }
 
-CommandResult* ECU::readData() const {
-  //    Wait minimum package from uart
-  while (Serial2.available() < 4) {
-    delay(1);
-  }
+bool Ecu::updateDataFromTable10() {
+  auto response = updateDataFromTable(0x10);
+  if (response == nullptr) { return false; }
+  if (response->len != 0x16) { return false; }
 
-  uint8_t responseConfirm = Serial2.read();
-  uint8_t responseLength = Serial2.read();
-  uint8_t responseCommand = Serial2.read();
+  m_engineData.rpm = (response->data[4] << 8) + response->data[5];
+  m_sensorsData.tpsVolts = calcValueDivide256(response->data[6]);
+  m_sensorsData.tpsPercent = calcValueDivide16(response->data[7]);
+  m_sensorsData.ectVolts = calcValueDivide256(response->data[8]);
+  m_sensorsData.ectTemp = calcValueMinus40(response->data[9]);
+  m_sensorsData.iatVolts = calcValueDivide256(response->data[10]);
+  m_sensorsData.iatTemp = calcValueMinus40(response->data[11]);
+  m_sensorsData.mapVolts = calcValueDivide256(response->data[12]);
+  m_sensorsData.mapPressure = response->data[13];
+  m_vehicleData.batteryVolts = calcValueDivide10(response->data[16]);
+  m_vehicleData.speed = response->data[17];
+  m_engineData.fuelInject = (response->data[18] << 8) + response->data[19];
+  m_engineData.ignitionAngle = calcValueDivide10(response->data[20]);
 
-  if (responseLength == 0) {
-    std::cerr << "ECU >> The message is very small (size: 0x" << std::hex << static_cast<int>(responseLength) << ")" << std::endl;
-    return nullptr;
-  }
-
-  if (responseLength > m_bufferMaxSize) {
-    std::cerr << "ECU >> The message is too big (size: 0x" << std::hex << static_cast<int>(responseLength) << ")" << std::endl;
-    return nullptr;
-  }
-
-  //    Create buffer for read
-  auto data = new uint8_t[responseLength];
-  data[0] = responseConfirm;
-  data[1] = responseLength;
-  data[2] = responseCommand;
-
-  //    Wait full package from uart
-  while (Serial2.available() < (responseLength - 3)) {
-    delay(1);
-  }
-
-  //    Read package data from uart
-  for (size_t i = 3; i < responseLength; i++) {
-    uint8_t value = Serial2.read();
-    data[i] = value;
-  }
-
-  uint8_t responseChecksum = data[responseLength - 1];
-  uint8_t calculatedChecksum = calcChecksum(data, responseLength - 1);
-
-  if (responseChecksum != calculatedChecksum) {
-    std::cerr << "ECU >> The checksum does not match" << std::endl;
-    return nullptr;
-  }
-
-  auto result = new CommandResult();
-  result->code = responseConfirm;
-  result->command = responseCommand;
-  result->checksum = responseChecksum;
-  result->data = data;
-  result->len = responseLength;
-
-  std::cout << "ECU >> ";
-  for (size_t i = 0; i < responseLength; i++) {
-    std::cout << "0x" << std::hex << static_cast<int>(data[i]) << " ";
-  }
-  std::cout << std::endl;
-
-  return result;
+  return true;
 }
 
-void ECU::writeData(uint8_t const* data, size_t len) const {
-  Serial2.flush(false);
-  Serial2.write(data, len);
+bool Ecu::updateDataFromTable11() {
+  auto response = updateDataFromTable(0x11);
+  if (response == nullptr) { return false; }
+  if (response->len != 0x19) { return false; }
 
-  while (Serial2.available() < len) {
-    delay(1);
-  }
+  m_engineData.rpm = (response->data[4] << 8) + response->data[5];
+  m_sensorsData.tpsVolts = calcValueDivide256(response->data[6]);
+  m_sensorsData.tpsPercent = calcValueDivide16(response->data[7]);
+  m_sensorsData.ectVolts = calcValueDivide256(response->data[8]);
+  m_sensorsData.ectTemp = calcValueMinus40(response->data[9]);
+  m_sensorsData.iatVolts = calcValueDivide256(response->data[10]);
+  m_sensorsData.iatTemp = calcValueMinus40(response->data[11]);
+  m_sensorsData.mapVolts = calcValueDivide256(response->data[12]);
+  m_sensorsData.mapPressure = response->data[13];
+  m_vehicleData.batteryVolts = calcValueDivide10(response->data[16]);
+  m_vehicleData.speed = response->data[17];
+  m_engineData.fuelInject = (response->data[18] << 8) + response->data[19];
+  m_engineData.ignitionAngle = calcValueDivide10(response->data[20]);
 
-  for (size_t i = 0; i < len; i++) {
-    uint8_t nextValue = Serial2.peek();
-    if (nextValue == data[i]) {
-      Serial2.read();
-    }
-  }
+  m_unknownData.unkData1 = response->data[21];
+  m_unknownData.unkData2 = response->data[22];
+  m_unknownData.unkData3 = response->data[23];
 
-  std::cout << "ECU << ";
-  for (size_t i = 0; i < len; i++) {
-    std::cout << "0x" << std::hex << static_cast<int>(data[i]) << " ";
-  }
-  std::cout << std::endl;
+  return true;
+}
+
+bool Ecu::updateDataFromTable20() {
+  auto response = updateDataFromTable(0x20);
+  if (response == nullptr) { return false; }
+  if (response->len != 0x8) { return false; }
+
+  m_unknownData.unkData4 = response->data[4];
+  m_unknownData.unkData5 = response->data[5];
+  m_unknownData.unkData6 = response->data[6];
+
+  return true;
+}
+
+bool Ecu::updateDataFromTable21() {
+  auto response = updateDataFromTable(0x21);
+  if (response == nullptr) { return false; }
+  if (response->len != 0xb) { return false; }
+
+  m_unknownData.unkData1 = response->data[4];
+  m_unknownData.unkData2 = response->data[5];
+  m_unknownData.unkData3 = response->data[6];
+  m_unknownData.unkData4 = response->data[7];
+  m_unknownData.unkData5 = response->data[8];
+  m_unknownData.unkData6 = response->data[9];
+
+  return true;
+}
+
+bool Ecu::updateDataFromTableD0() {
+  auto response = updateDataFromTable(0xD0);
+  if (response == nullptr) { return false; }
+  if (response->len != 0x13) { return false; }
+
+  m_unknownData.unkData7 = response->data[4];
+  m_unknownData.unkData8 = response->data[5];
+  m_unknownData.unkData9 = response->data[6];
+  m_unknownData.unkData10 = response->data[7];
+  m_unknownData.unkData11 = response->data[8];
+  m_unknownData.unkData12 = response->data[9];
+  m_unknownData.unkData13 = response->data[10];
+  m_unknownData.unkData14 = response->data[11];
+  m_unknownData.unkData15 = response->data[12];
+  m_unknownData.unkData16 = response->data[13];
+  m_unknownData.unkData17 = response->data[14];
+  m_unknownData.unkData18 = response->data[15];
+  m_unknownData.unkData19 = response->data[16];
+  m_unknownData.unkData20 = response->data[17];
+
+  return true;
+}
+
+bool Ecu::updateDataFromTableD1() {
+  auto response = updateDataFromTable(0xD1);
+  if (response == nullptr) { return false; }
+  if (response->len != 0xb) { return false; }
+
+  m_vehicleData.state = response->data[4];
+
+  m_unknownData.unkData21 = response->data[5];
+  m_unknownData.unkData22 = response->data[6];
+  m_unknownData.unkData23 = response->data[7];
+  m_unknownData.unkData24 = response->data[8];
+  m_unknownData.unkData25 = response->data[9];
+
+  return true;
 }

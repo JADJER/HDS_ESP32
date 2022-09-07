@@ -5,8 +5,8 @@
 #pragma once
 
 #include "Ble.hpp"
+#include "Communication.hpp"
 #include "Ecu.hpp"
-#include "Engine.hpp"
 #include "Indicator.hpp"
 
 class Controller {
@@ -20,8 +20,8 @@ class Controller {
  private:
   bool m_ecuConnected;
   BLE m_ble;
-  ECU m_ecu;
-  Engine m_engine;
+  Communication m_communication;
+  Ecu m_ecu;
   Indicator m_indicator;
 
  private:

@@ -15,7 +15,8 @@ class BLE {
   ~BLE();
 
  public:
-  BLEService* createService(std::string const& serviceUuid, std::vector<std::string> const& characteristicsUuid);
+  BLEService* createService(std::string const& serviceName, std::vector<std::string> const& characteristicsUUID);
+  BLEService* createServiceNotify(std::string const& serviceName, std::vector<std::string> const& characteristicsUUID);
 
  public:
   void start();

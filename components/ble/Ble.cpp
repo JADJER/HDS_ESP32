@@ -5,6 +5,7 @@
 #include "Ble.hpp"
 #include <BLE2902.h>
 #include <BLEDevice.h>
+#include <BLEUUID.h>
 
 BLE::BLE(std::string const& name) : m_bleCharacteristicMap() {
   BLEDevice::init(name);
@@ -13,13 +14,25 @@ BLE::BLE(std::string const& name) : m_bleCharacteristicMap() {
 
 BLE::~BLE() = default;
 
-BLEService* BLE::createService(std::string const& serviceUuid, std::vector<std::string> const& characteristicsUuid) {
-  auto service = m_server->createService(serviceUuid, characteristicsUuid.size() * 10);
-  m_bleServiceMap.setByUUID(serviceUuid, service);
+BLEService* BLE::createService(std::string const& serviceUUID, std::vector<std::string> const& characteristicsUUID) {
+  auto service = m_server->createService(serviceUUID, characteristicsUUID.size() * 2 + 1);
+  m_bleServiceMap.setByUUID(serviceUUID, service);
 
-  for (auto& characteristicUuid : characteristicsUuid) {
-    auto characteristic = service->createCharacteristic(characteristicUuid, BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY);
-    m_bleCharacteristicMap.setByUUID(characteristic, characteristicUuid);
+  for (auto& characteristicUUID : characteristicsUUID) {
+    auto characteristic = service->createCharacteristic(characteristicUUID, BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE);
+    m_bleCharacteristicMap.setByUUID(characteristic, characteristicUUID);
+  }
+
+  return service;
+}
+
+BLEService* BLE::createServiceNotify(std::string const& serviceUUID, std::vector<std::string> const& characteristicsUUID) {
+  auto service = m_server->createService(serviceUUID, characteristicsUUID.size() * 3 + 1);
+  m_bleServiceMap.setByUUID(serviceUUID, service);
+
+  for (auto& characteristicUUID : characteristicsUUID) {
+    auto characteristic = service->createCharacteristic(characteristicUUID, BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE | BLECharacteristic::PROPERTY_NOTIFY);
+    m_bleCharacteristicMap.setByUUID(characteristic, characteristicUUID);
 
     characteristic->addDescriptor(new BLE2902());
   }

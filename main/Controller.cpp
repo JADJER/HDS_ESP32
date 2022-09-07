@@ -6,41 +6,64 @@
 #include <Arduino.h>
 #include <iostream>
 
-Controller::Controller() : m_ble("HDS"), m_ecu(16, 17), m_engine(m_ecu), m_indicator(2) {
-  m_ble.createService("d6f3f0a5-e35b-463e-834b-d7a69cb9ba30", {
-                                                                  "89d26cc3-0df7-4d3d-aebf-381d595d9395",//ID
-                                                                  "96902795-9837-4345-949f-706cdb7b76f6",//RPM
-                                                                  "ce914ca7-5b8b-4133-af2f-27a15f7c7d89",//SPEED
-                                                                  "41ea8aa3-9541-4c36-949e-45d63a0da48b",//BATTERY
-                                                                  "7f237aee-d163-4f32-a6aa-f008b0727e26",
-                                                              });
-  m_ble.createService("2b3c1105-ff38-4963-b5af-c2631372f9ad", {
-                                                                  "a4c6be92-0060-4702-a63a-5d7eb122eac8",//TPS_PERCENT
-                                                                  "2b2ee537-9bb5-4cd3-9e44-72122f1c82ca",//TPS_VOLTAGE
-                                                              });
-  m_ble.createService("7cdd9e93-844f-4313-b500-91e8a374c8a7", {
-                                                                  "ddbea267-80cb-4bc3-992a-159bb45b32d2",//ECT_TEMP
-                                                                  "3bf76097-4b24-428a-81a2-bb2f073e273e",//ECT_VOLTAGE
-                                                              });
-  m_ble.createService("1311712d-1ef6-4161-be8e-6b60aab4c643", {
-                                                                  "6b9679b7-3fc4-4f30-ae75-df2f2179dfca",//IAT_TEMP
-                                                                  "63c6853f-1d91-49eb-bbe5-ec4a05174bdc",//IAT_VOLTAGE
-                                                              });
-  m_ble.createService("5ed5a50d-7b41-4bd5-a937-dbd58b5e469f", {
-                                                                  "96f9b873-6c05-42d6-8245-06abffe4abfb",//MAP_PRESSURE
-                                                                  "b7df0786-d4c3-43d9-a1ff-ba98af91ce52",//MAP_VOLTAGE
-                                                              });
-  m_ble.createService("248bb324-f9f0-4e81-a0eb-78e046ee2ffa", {
-                                                                  "ee2880a1-0ef8-4448-a488-bc44414de6f9",//FUEL_INJECT
-                                                                  "85ca5a88-5980-40ab-be6c-16b26ae9d020",//IGNITION_ANGLE
-                                                                  "7cb4a1b8-c692-49c7-b7f3-4eb940d5d2f0",//UNK1
-                                                                  "0ddc7e88-c531-46a9-9183-1222db4a6875",//UNK2
-                                                                  "9fdd5c0a-9d9b-42ff-9bfa-fe5e03861b45",//UNK3
+Controller::Controller() : m_ble("HDS"), m_communication(16, 17), m_ecu(m_communication), m_indicator(2) {
+  m_ble.createServiceNotify("9d1e62fc-e0a9-4250-8743-ba7be5820622", {
+                                                                        "abb0a0d1-08d9-4522-87d8-38c1c3b575f7",
+                                                                        "f6f83d7b-afb3-4715-8d54-9eb7f867b1ae",
+                                                                        "420b960b-3fca-4b84-a224-2dddd55dc7d8",
+                                                                    });
+
+  m_ble.createServiceNotify("df874d19-7246-4370-9b4c-a80955191ad4", {
+                                                                        "2f4c7890-5477-4803-80a3-46a066310a77",
+                                                                        "ac986e86-034e-4561-8944-148c16712abc",
+                                                                        "f269fec2-766d-4833-9a9b-0c0ad457cf7c",
+                                                                        "5861773c-3d66-44f3-af15-74bea87d2557",
+                                                                        "138b4ae7-61ef-4783-bee8-3e8dc1f745b9",
+                                                                        "8d0edd85-0774-49bb-8cc5-294164429f50",
+                                                                    });
+
+  m_ble.createServiceNotify("d4b4fc17-fde2-45ce-b0cb-2a22910a67f1", {
+                                                                        "519fa904-6022-4247-9a3d-35e72d75f2c6",
+                                                                        "acc5be7a-af25-4c38-8ced-2a343eff00fb",
+                                                                        "eb2a13ea-1e8c-4c27-9420-4c97b2c9d7d5",
+                                                                        "0c7dd6fd-dac9-40d8-8a3d-52ffa8d81dc9",
+                                                                        "f30cab3f-69ad-440b-b6ce-d632780e8a36",
+                                                                        "06800dbe-bff0-4101-b679-4c0005c78405",
+                                                                        "390e26f6-3026-4514-92cb-66ad7ff24a6c",
+                                                                        "2bdc16dd-b921-4b60-82c4-f51fecf3b0f3",
+                                                                    });
+
+  m_ble.createService("af50deb7-2cc5-4436-87e0-ce784f35ae2d", {
+                                                                  "dc639c42-f3c8-4bf2-8d0d-37ea801c9773",
+                                                                  "3e0ec558-4e1f-4291-ade4-3837cccfe39f",
+                                                                  "0e732023-f50e-47e2-88a9-5319ea804fe9",
+                                                                  "80284955-22e5-4c65-8c65-bf95bc5e40eb",
+                                                                  "1ee703e2-acbc-49ad-ab2e-c43907076f56",
+                                                                  "190d2417-42a2-4bff-ad82-3f228de92771",
+                                                                  "2867911e-7b6b-4e0b-a751-e1141f2b2e15",
+                                                                  "b556d151-1adf-4429-8bfa-4884ebeac07b",
+                                                                  "12157041-9589-4085-be0e-f50424ab3f9f",
+                                                                  "dc8168c6-bda5-4f35-8c28-de890d24623f",
+                                                                  "afdd4e3c-bbda-42c9-b5d6-4b51a7fb7570",
+                                                                  "0644f5f0-d428-42d8-a2ba-e50c99700de2",
+                                                                  "83a27dc7-9e2e-42a7-a938-46e930bd55d9",
+                                                                  "d76dbe80-f26b-4f6b-8e8d-6e0d9cc629dc",
+                                                                  "6b818f7f-434f-4b21-888c-a12a580e3f29",
+                                                                  "2466fd5d-89fe-44a2-95de-20b073e33cc2",
+                                                                  "76bc6808-d689-4c7b-98ed-2ec2ee99cc14",
+                                                                  "2b8b0862-99c9-4197-a5c8-3e7fed57a3ee",
+                                                                  "a0d4da5d-dff7-45f7-9304-dfee33484cf1",
+                                                                  "bfcfa697-b98c-4ce0-9600-47ca4b5a9983",
+                                                                  "701517b8-1b32-439a-ae84-7a8cab4d51a3",
+                                                                  "3a8d236c-4c7c-48c9-9ad1-5d62f4c682c0",
+                                                                  "770311c3-eb13-4b76-8e46-35ee5b761476",
+                                                                  "402c312f-5ee5-4290-984f-9986db3fc4a4",
+                                                                  "99d665c1-ce3a-42dc-bbbf-17c09d44c539",
                                                               });
 
   m_indicator.blink(500);
 
-  m_ecuConnected = m_ecu.connect();
+  m_ecuConnected = m_communication.connect();
   if (not m_ecuConnected) {
     std::cout << "ECU connection failed" << std::endl;
     m_indicator.enable(false);
@@ -49,8 +72,8 @@ Controller::Controller() : m_ble("HDS"), m_ecu(16, 17), m_engine(m_ecu), m_indic
 
   m_indicator.blink(100);
 
-  m_engine.test();
-  m_engine.detectActiveTables();
+  m_ecu.test();
+  m_ecu.detectActiveTables();
 
   m_ble.start();
   m_ble.advertising();
@@ -69,30 +92,57 @@ Controller::~Controller() = default;
 }
 
 void Controller::spinOnce() {
-  m_engine.spinOnce();
+  m_ecu.spinOnce();
 
-  m_ble.setValueString("89d26cc3-0df7-4d3d-aebf-381d595d9395", m_engine.getId());
+  auto vehicleData = m_ecu.getVehicleData();
+  m_ble.setValueString("abb0a0d1-08d9-4522-87d8-38c1c3b575f7", std::to_string(vehicleData.batteryVolts));
+  m_ble.setValueString("f6f83d7b-afb3-4715-8d54-9eb7f867b1ae", std::to_string(vehicleData.speed));
+  m_ble.setValueString("420b960b-3fca-4b84-a224-2dddd55dc7d8", std::to_string(vehicleData.state));
 
-  m_ble.setValueString("96902795-9837-4345-949f-706cdb7b76f6", std::to_string(m_engine.getRpm()));
-  m_ble.setValueString("ce914ca7-5b8b-4133-af2f-27a15f7c7d89", std::to_string(m_engine.getSpeed()));
-  m_ble.setValueString("41ea8aa3-9541-4c36-949e-45d63a0da48b", std::to_string(m_engine.getBatteryVolts()));
-  m_ble.setValueString("7f237aee-d163-4f32-a6aa-f008b0727e26", std::to_string(m_engine.getState()));
+  auto engineData = m_ecu.getEngineData();
+  m_ble.setValueString("2f4c7890-5477-4803-80a3-46a066310a77", std::to_string(engineData.rpm));
+  m_ble.setValueString("ac986e86-034e-4561-8944-148c16712abc", std::to_string(engineData.fuelInject));
+  m_ble.setValueString("f269fec2-766d-4833-9a9b-0c0ad457cf7c", std::to_string(engineData.ignitionAngle));
+  m_ble.setValueString("5861773c-3d66-44f3-af15-74bea87d2557", std::to_string(engineData.unkData1));
+  m_ble.setValueString("138b4ae7-61ef-4783-bee8-3e8dc1f745b9", std::to_string(engineData.unkData2));
+  m_ble.setValueString("8d0edd85-0774-49bb-8cc5-294164429f50", std::to_string(engineData.unkData3));
 
-  m_ble.setValueString("a4c6be92-0060-4702-a63a-5d7eb122eac8", std::to_string(m_engine.getTpsPercent()));
-  m_ble.setValueString("2b2ee537-9bb5-4cd3-9e44-72122f1c82ca", std::to_string(m_engine.getTpsVolts()));
+  auto sensorsData = m_ecu.getSensorsData();
+  m_ble.setValueString("519fa904-6022-4247-9a3d-35e72d75f2c6", std::to_string(sensorsData.tpsPercent));
+  m_ble.setValueString("acc5be7a-af25-4c38-8ced-2a343eff00fb", std::to_string(sensorsData.tpsVolts));
+  m_ble.setValueString("eb2a13ea-1e8c-4c27-9420-4c97b2c9d7d5", std::to_string(sensorsData.iatTemp));
+  m_ble.setValueString("0c7dd6fd-dac9-40d8-8a3d-52ffa8d81dc9", std::to_string(sensorsData.iatVolts));
+  m_ble.setValueString("f30cab3f-69ad-440b-b6ce-d632780e8a36", std::to_string(sensorsData.ectTemp));
+  m_ble.setValueString("06800dbe-bff0-4101-b679-4c0005c78405", std::to_string(sensorsData.ectVolts));
+  m_ble.setValueString("390e26f6-3026-4514-92cb-66ad7ff24a6c", std::to_string(sensorsData.mapPressure));
+  m_ble.setValueString("2bdc16dd-b921-4b60-82c4-f51fecf3b0f3", std::to_string(sensorsData.mapVolts));
 
-  m_ble.setValueString("ddbea267-80cb-4bc3-992a-159bb45b32d2", std::to_string(m_engine.getEctTemp()));
-  m_ble.setValueString("3bf76097-4b24-428a-81a2-bb2f073e273e", std::to_string(m_engine.getEctVolts()));
+  auto errorData = m_ecu.getErrorData();
 
-  m_ble.setValueString("6b9679b7-3fc4-4f30-ae75-df2f2179dfca", std::to_string(m_engine.getIatTemp()));
-  m_ble.setValueString("63c6853f-1d91-49eb-bbe5-ec4a05174bdc", std::to_string(m_engine.getIatVolts()));
-
-  m_ble.setValueString("96f9b873-6c05-42d6-8245-06abffe4abfb", std::to_string(m_engine.getMapPressure()));
-  m_ble.setValueString("b7df0786-d4c3-43d9-a1ff-ba98af91ce52", std::to_string(m_engine.getMapVolts()));
-
-  m_ble.setValueString("ee2880a1-0ef8-4448-a488-bc44414de6f9", std::to_string(m_engine.getFuelInject()));
-  m_ble.setValueString("85ca5a88-5980-40ab-be6c-16b26ae9d020", std::to_string(m_engine.getIgnitionAngle()));
-  m_ble.setValueString("7cb4a1b8-c692-49c7-b7f3-4eb940d5d2f0", std::to_string(m_engine.getUnknown1()));
-  m_ble.setValueString("0ddc7e88-c531-46a9-9183-1222db4a6875", std::to_string(m_engine.getUnknown2()));
-  m_ble.setValueString("9fdd5c0a-9d9b-42ff-9bfa-fe5e03861b45", std::to_string(m_engine.getUnknown3()));
+  auto unknownData = m_ecu.getUnknownData();
+  m_ble.setValueString("dc639c42-f3c8-4bf2-8d0d-37ea801c9773", std::to_string(unknownData.unkData1));
+  m_ble.setValueString("3e0ec558-4e1f-4291-ade4-3837cccfe39f", std::to_string(unknownData.unkData2));
+  m_ble.setValueString("0e732023-f50e-47e2-88a9-5319ea804fe9", std::to_string(unknownData.unkData3));
+  m_ble.setValueString("80284955-22e5-4c65-8c65-bf95bc5e40eb", std::to_string(unknownData.unkData4));
+  m_ble.setValueString("1ee703e2-acbc-49ad-ab2e-c43907076f56", std::to_string(unknownData.unkData5));
+  m_ble.setValueString("190d2417-42a2-4bff-ad82-3f228de92771", std::to_string(unknownData.unkData6));
+  m_ble.setValueString("2867911e-7b6b-4e0b-a751-e1141f2b2e15", std::to_string(unknownData.unkData7));
+  m_ble.setValueString("b556d151-1adf-4429-8bfa-4884ebeac07b", std::to_string(unknownData.unkData8));
+  m_ble.setValueString("12157041-9589-4085-be0e-f50424ab3f9f", std::to_string(unknownData.unkData9));
+  m_ble.setValueString("dc8168c6-bda5-4f35-8c28-de890d24623f", std::to_string(unknownData.unkData10));
+  m_ble.setValueString("afdd4e3c-bbda-42c9-b5d6-4b51a7fb7570", std::to_string(unknownData.unkData11));
+  m_ble.setValueString("0644f5f0-d428-42d8-a2ba-e50c99700de2", std::to_string(unknownData.unkData12));
+  m_ble.setValueString("83a27dc7-9e2e-42a7-a938-46e930bd55d9", std::to_string(unknownData.unkData13));
+  m_ble.setValueString("d76dbe80-f26b-4f6b-8e8d-6e0d9cc629dc", std::to_string(unknownData.unkData14));
+  m_ble.setValueString("6b818f7f-434f-4b21-888c-a12a580e3f29", std::to_string(unknownData.unkData15));
+  m_ble.setValueString("2466fd5d-89fe-44a2-95de-20b073e33cc2", std::to_string(unknownData.unkData16));
+  m_ble.setValueString("76bc6808-d689-4c7b-98ed-2ec2ee99cc14", std::to_string(unknownData.unkData17));
+  m_ble.setValueString("2b8b0862-99c9-4197-a5c8-3e7fed57a3ee", std::to_string(unknownData.unkData18));
+  m_ble.setValueString("a0d4da5d-dff7-45f7-9304-dfee33484cf1", std::to_string(unknownData.unkData19));
+  m_ble.setValueString("bfcfa697-b98c-4ce0-9600-47ca4b5a9983", std::to_string(unknownData.unkData20));
+  m_ble.setValueString("701517b8-1b32-439a-ae84-7a8cab4d51a3", std::to_string(unknownData.unkData21));
+  m_ble.setValueString("3a8d236c-4c7c-48c9-9ad1-5d62f4c682c0", std::to_string(unknownData.unkData22));
+  m_ble.setValueString("770311c3-eb13-4b76-8e46-35ee5b761476", std::to_string(unknownData.unkData23));
+  m_ble.setValueString("402c312f-5ee5-4290-984f-9986db3fc4a4", std::to_string(unknownData.unkData24));
+  m_ble.setValueString("99d665c1-ce3a-42dc-bbbf-17c09d44c539", std::to_string(unknownData.unkData25));
 }
