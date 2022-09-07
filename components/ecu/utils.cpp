@@ -6,28 +6,28 @@
 
 #include "utils.hpp"
 
-float calcValueDivide256(int val) {
+float calcValueDivide256(float val) {
   //convert to dec, multiple by 5, then divide result by 256
   //used for TPS Volt, ECT Volt, IAT Volt, MAP Volt
-  return (val * 5) / 256;
+  return val * 5 / 256;
 }
 
-float calcValueMinus40(int val) {
+int calcValueMinus40(int val) {
   //value minus 40
   //used for ECT Temp, IAT Temp
   return val - 40;
 }
 
-float calcValueDivide10(int val) {
+float calcValueDivide10(float val) {
   //value divided by 10
   //used for Batt Volt
   return val / 10;
 }
 
-float calcValueDivide16(int val) {
+float calcValueDivide16(float val) {
   //value divided by 16 and times 10
   //used for TPS%
-  return (val / 16) * 10;
+  return val / 16 * 10;
 }
 
 uint16_t calcChecksum(uint8_t const* data, size_t len) {
@@ -38,8 +38,4 @@ uint16_t calcChecksum(uint8_t const* data, size_t len) {
   }
 
   return checkSum;
-}
-
-float calcKPHtoMPH(int val) {
-  return val / 1.609344;
 }

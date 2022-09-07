@@ -17,18 +17,19 @@ struct EngineData {
   float tpsPercent;
   float tpsVolts;
 
-  float ectTemp;
+  int ectTemp;
   float ectVolts;
 
-  float iatTemp;
+  int iatTemp;
   float iatVolts;
 
   float mapPressure;
   float mapVolts;
 
+  int fuelInject;
+  float ignitionAngle;
+
   int unk_data_1;
-  float unk_data_2;
-  float unk_data_3;
-  float unk_data_4;
-  float unk_data_5;
+  int unk_data_2;
+  int unk_data_3;
 };

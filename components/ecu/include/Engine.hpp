@@ -24,12 +24,12 @@ class Engine {
   int getState() const;
   int getRpm() const;
   int getSpeed() const;
-  int getTpsPercent() const;
+  float getTpsPercent() const;
   float getTpsVolts() const;
-  float getEctTemp() const;
+  int getEctTemp() const;
   float getEctVolts() const;
 
-  float getIatTemp() const;
+  int getIatTemp() const;
   float getIatVolts() const;
 
   float getBatteryVolts() const;
@@ -37,11 +37,11 @@ class Engine {
   float getMapPressure() const;
   float getMapVolts() const;
 
+  int getFuelInject() const;
+  float getIgnitionAngle() const;
   int getUnknown1() const;
-  float getUnknown2() const;
-  float getUnknown3() const;
-  float getUnknown4() const;
-  float getUnknown5() const;
+  int getUnknown2() const;
+  int getUnknown3() const;
 
  public:
   void spinOnce();

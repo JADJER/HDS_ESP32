@@ -31,11 +31,11 @@ Controller::Controller() : m_ble("HDS"), m_ecu(16, 17), m_engine(m_ecu), m_indic
                                                                   "b7df0786-d4c3-43d9-a1ff-ba98af91ce52",//MAP_VOLTAGE
                                                               });
   m_ble.createService("248bb324-f9f0-4e81-a0eb-78e046ee2ffa", {
-                                                                  "ee2880a1-0ef8-4448-a488-bc44414de6f9",//UNK1
-                                                                  "85ca5a88-5980-40ab-be6c-16b26ae9d020",//UNK2
-                                                                  "7cb4a1b8-c692-49c7-b7f3-4eb940d5d2f0",//UNK3
-                                                                  "0ddc7e88-c531-46a9-9183-1222db4a6875",//UNK4
-                                                                  "9fdd5c0a-9d9b-42ff-9bfa-fe5e03861b45",//UNK5
+                                                                  "ee2880a1-0ef8-4448-a488-bc44414de6f9",//FUEL_INJECT
+                                                                  "85ca5a88-5980-40ab-be6c-16b26ae9d020",//IGNITION_ANGLE
+                                                                  "7cb4a1b8-c692-49c7-b7f3-4eb940d5d2f0",//UNK1
+                                                                  "0ddc7e88-c531-46a9-9183-1222db4a6875",//UNK2
+                                                                  "9fdd5c0a-9d9b-42ff-9bfa-fe5e03861b45",//UNK3
                                                               });
 
   m_indicator.blink(500);
@@ -90,9 +90,9 @@ void Controller::spinOnce() {
   m_ble.setValueString("96f9b873-6c05-42d6-8245-06abffe4abfb", std::to_string(m_engine.getMapPressure()));
   m_ble.setValueString("b7df0786-d4c3-43d9-a1ff-ba98af91ce52", std::to_string(m_engine.getMapVolts()));
 
-  m_ble.setValueString("ee2880a1-0ef8-4448-a488-bc44414de6f9", std::to_string(m_engine.getUnknown1()));
-  m_ble.setValueString("85ca5a88-5980-40ab-be6c-16b26ae9d020", std::to_string(m_engine.getUnknown2()));
-  m_ble.setValueString("7cb4a1b8-c692-49c7-b7f3-4eb940d5d2f0", std::to_string(m_engine.getUnknown3()));
-  m_ble.setValueString("0ddc7e88-c531-46a9-9183-1222db4a6875", std::to_string(m_engine.getUnknown4()));
-  m_ble.setValueString("9fdd5c0a-9d9b-42ff-9bfa-fe5e03861b45", std::to_string(m_engine.getUnknown5()));
+  m_ble.setValueString("ee2880a1-0ef8-4448-a488-bc44414de6f9", std::to_string(m_engine.getFuelInject()));
+  m_ble.setValueString("85ca5a88-5980-40ab-be6c-16b26ae9d020", std::to_string(m_engine.getIgnitionAngle()));
+  m_ble.setValueString("7cb4a1b8-c692-49c7-b7f3-4eb940d5d2f0", std::to_string(m_engine.getUnknown1()));
+  m_ble.setValueString("0ddc7e88-c531-46a9-9183-1222db4a6875", std::to_string(m_engine.getUnknown2()));
+  m_ble.setValueString("9fdd5c0a-9d9b-42ff-9bfa-fe5e03861b45", std::to_string(m_engine.getUnknown3()));
 }

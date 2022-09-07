@@ -1,6 +1,8 @@
 set(SOURCES
+#        update.cpp
         main.cpp
-        Controller.cpp)
+        Controller.cpp
+        )
 
 set(COMPONENTS ecu ble indicator)
 
