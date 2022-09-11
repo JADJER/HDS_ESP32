@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "ICommunication.hpp"
+#include "IProtocol.hpp"
 #include "data/EngineData.hpp"
 #include "data/ErrorData.hpp"
 #include "data/SensorsData.hpp"
@@ -14,7 +14,10 @@
 
 class Ecu {
  public:
-  explicit Ecu(ICommunication& communication);
+  explicit Ecu(IProtocol& protocol);
+
+ public:
+  bool connect();
 
  public:
   void detectActiveTables();
@@ -39,7 +42,7 @@ class Ecu {
   bool m_enableTable20;
   bool m_enableTable21;
 
-  ICommunication& m_communication;
+  IProtocol& m_protocol;
 
   VehicleData m_vehicleData;
   EngineData m_engineData;

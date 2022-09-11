@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <cstdlib>
+
 float calcValueDivide256(float val);
 int calcValueMinus40(int val);
 float calcValueDivide10(float val);

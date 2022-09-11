@@ -5,13 +5,17 @@
 #include "Ecu.hpp"
 #include "utils.hpp"
 
-Ecu::Ecu(ICommunication& communication)
-    : m_communication(communication), m_vehicleData(), m_engineData(), m_sensorsData(), m_errorData(), m_unknownData() {
+Ecu::Ecu(IProtocol& protocol)
+    : m_protocol(protocol), m_vehicleData(), m_engineData(), m_sensorsData(), m_errorData(), m_unknownData() {
 
   m_enableTable10 = false;
   m_enableTable11 = false;
   m_enableTable20 = false;
   m_enableTable21 = false;
+}
+
+bool Ecu::connect() {
+  return m_protocol.connect();
 }
 
 void Ecu::detectActiveTables() {
@@ -32,8 +36,8 @@ void Ecu::test() const {
 
     address++;
 
-    m_communication.writeData(message, 5);
-    m_communication.readData();
+    m_protocol.writeData(message, 5);
+    m_protocol.readData();
   }
 }
 
@@ -75,9 +79,9 @@ CommandResult* Ecu::updateDataFromTable(uint8_t table) const {
   uint8_t message[5] = {0x72, 0x05, 0x71, table, 0x00};
   message[4] = calcChecksum(message, 4);
 
-  m_communication.writeData(message, 5);
+  m_protocol.writeData(message, 5);
 
-  return m_communication.readData();
+  return m_protocol.readData();
 }
 
 bool Ecu::updateDataFromTable0() {

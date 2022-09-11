@@ -2,8 +2,6 @@
 // Created by jadjer on 24.08.22.
 //
 
-#include <Arduino.h>
-
 #include "utils.hpp"
 
 float calcValueDivide256(float val) {

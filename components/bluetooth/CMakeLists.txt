@@ -1,9 +1,6 @@
 set(SOURCES
-        utils.cpp
-        Ecu.cpp)
+        Bluetooth.cpp)
 
-set(COMPONENTS
-        honda_protocol
-        )
+set(COMPONENTS)
 
 idf_component_register(SRCS ${SOURCES} INCLUDE_DIRS include REQUIRES ${COMPONENTS})

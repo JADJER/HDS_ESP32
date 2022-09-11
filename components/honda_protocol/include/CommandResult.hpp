@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <Arduino.h>
+#include <cstdlib>
 
 struct CommandResult {
   uint8_t code;

@@ -3,8 +3,7 @@
 //
 
 #include "Indicator.hpp"
-
-#include <Arduino.h>
+#include <esp32-hal-gpio.h>
 
 Indicator::Indicator(int pin) : m_enable(false) {
   m_led = pin;
