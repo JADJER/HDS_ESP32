@@ -4,8 +4,13 @@
 
 #pragma once
 
+#include <esp_err.h>
+
 class Mesh {
  public:
   Mesh();
   ~Mesh();
+
+ public:
+  esp_err_t init();
 };

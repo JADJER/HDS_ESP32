@@ -1,6 +1,8 @@
 set(SOURCES
         Mesh.cpp)
 
-set(COMPONENTS)
+set(COMPONENTS
+        bt
+        )
 
 idf_component_register(SRCS ${SOURCES} INCLUDE_DIRS include REQUIRES ${COMPONENTS})
