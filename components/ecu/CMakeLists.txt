@@ -1,6 +1,6 @@
 set(SOURCES
-        utils.cpp
-        Ecu.cpp)
+        utils.c
+        ecu.c)
 
 set(COMPONENTS
         honda_protocol

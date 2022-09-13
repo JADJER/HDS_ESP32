@@ -1,10 +1,10 @@
 set(SOURCES
-        Protocol.cpp
-        utils.cpp
+        protocol.c
+        utils.c
         )
 
 set(COMPONENTS
-        arduino
+        driver
         )
 
 idf_component_register(SRCS ${SOURCES} INCLUDE_DIRS include REQUIRES ${COMPONENTS})

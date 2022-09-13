@@ -4,8 +4,8 @@
 
 #pragma once
 
-struct VehicleData {
-  float batteryVolts;
+typedef struct {
+  float battery_volts;
   int speed;
   int state;
-};
+} vehicle_data_t;

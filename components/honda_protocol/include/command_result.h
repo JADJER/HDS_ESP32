@@ -4,12 +4,12 @@
 
 #pragma once
 
-#include <cstdlib>
+#include <stdlib.h>
 
-struct CommandResult {
+typedef struct {
   uint8_t code;
   uint8_t command;
   uint8_t checksum;
   uint8_t* data;
   size_t len;
-};
+} command_result_t;

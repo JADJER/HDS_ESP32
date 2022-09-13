@@ -1,10 +1,10 @@
-#include "Ecu.hpp"
 #include "Indicator.hpp"
 #include "Mesh.hpp"
 #include "Protocol.hpp"
+#include "ecu.h"
 #include <BLEDevice.h>
 
-extern "C" void app_main() {
+void app_main() {
   esp_err_t err;
 
   log_d("Initializing...");

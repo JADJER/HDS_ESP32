@@ -2,7 +2,7 @@
 // Created by jadjer on 24.08.22.
 //
 
-#include "utils.hpp"
+#include "utils.h"
 
 uint16_t calcChecksum(uint8_t const* data, size_t len) {
   uint16_t checkSum = 0;

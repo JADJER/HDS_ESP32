@@ -2,7 +2,7 @@
 // Created by jadjer on 24.08.22.
 //
 
-#include "utils.hpp"
+#include "utils.h"
 
 float calcValueDivide256(float val) {
   //convert to dec, multiple by 5, then divide result by 256
