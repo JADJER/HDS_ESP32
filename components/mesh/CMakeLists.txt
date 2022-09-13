@@ -1,6 +1,5 @@
 set(SOURCES
-        Mesh.cpp
-        MeshServer.cpp)
+        mesh.c)
 
 set(COMPONENTS
         bt

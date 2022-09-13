@@ -2,20 +2,8 @@
 // Created by jadjer on 30.08.22.
 //
 
-#include "Indicator.hpp"
-#include <esp32-hal-gpio.h>
-
-Indicator::Indicator(int pin) : m_enable(false) {
-  m_led = pin;
-  m_delay = 100;
-
-  pinMode(m_led, OUTPUT);
-}
-
-Indicator::~Indicator() {
-  m_enable = false;
-  m_thread.join();
-}
+#include "indicator.h"
+#include <driver/gpio.h>
 
 void Indicator::enable(bool enable) {
   m_enable = false;
