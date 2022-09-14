@@ -4,73 +4,43 @@
 
 #include "ecu.h"
 #include "command_result.h"
+#include "protocol.h"
 #include "utils.h"
 
-esp_err_t connect() {
-  return m_protocol.connect();
-}
+static char * m_id;
+static VehicleData_t m_vehicleData;
+static EngineData_t m_engineData;
+static SensorsData_t m_sensorsData;
+static ErrorData_t m_errorData;
+static UnknownData_t m_unknownData;
+static uint8_t m_enableTable10 = 0;
+static uint8_t m_enableTable11 = 0;
+static uint8_t m_enableTable20 = 0;
+static uint8_t m_enableTable21 = 0;
 
-void test() {
-  uint8_t address = 0x0;
-
-  for (size_t i = 0; i <= 255; i++) {
-    uint8_t message[5] = {0x72, 0x05, 0x71, address, 0x00};
-    message[4] = calcChecksum(message, 4);
-
-    address++;
-
-    m_protocol.writeData(message, 5);
-    m_protocol.readData();
-  }
-}
-
-char* get_id() {
-  return m_id;
-}
-
-engine_data_t get_engine_data() {
-  return m_engineData;
-}
-
-sensors_data_t get_sensors_data() {
-  return m_sensorsData;
-}
-
-vehicle_data_t get_vehicle_data() {
-  return m_vehicleData;
-}
-
-error_data_t get_error_data() {
-  return m_errorData;
-}
-
-unknown_data_t get_unknown_data() {
-  return m_unknownData;
-}
-
-command_result_t* update_data_from_table(uint8_t table) {
+CommandResult_t* updateDataFromTable(uint8_t table) {
   uint8_t message[5] = {0x72, 0x05, 0x71, table, 0x00};
   message[4] = calcChecksum(message, 4);
 
-  m_protocol.writeData(message, 5);
+  writeData(message, 5);
 
-  return m_protocol.readData();
+  return readData();
 }
 
-esp_err_t update_data_from_table_0() {
-  command_result_t* response = update_data_from_table(0x0);
+esp_err_t updateDataFromTable0() {
+  CommandResult_t* response = updateDataFromTable(0x0);
   if (response == NULL) { return ESP_FAIL; }
   if (response->len != 0xf) { return ESP_FAIL; }
 
-  for (size_t i = 4; i < response->len - 1; i++) {
-    m_id += std::to_string(static_cast<int>(response->data[i]));
-  }
+//  for (size_t i = 4; i < response->len - 1; i++) {
+//    m_id += std::to_string(static_cast<int>(response->data[i]));
+//  }
 
   return ESP_OK;
 }
 
-esp_err_t update_data_from_table_10() {
-  command_result_t* response = update_data_from_table(0x10);
+esp_err_t updateDataFromTable10() {
+  CommandResult_t* response = updateDataFromTable(0x10);
   if (response == NULL) { return ESP_FAIL; }
   if (response->len != 0x16) { return ESP_FAIL; }
 
@@ -86,13 +56,13 @@ esp_err_t update_data_from_table_10() {
   m_vehicleData.batteryVolts = calcValueDivide10(response->data[16]);
   m_vehicleData.speed = response->data[17];
   m_engineData.fuelInject = (response->data[18] << 8) + response->data[19];
-  m_engineData.ignitionAngle = calcValueDivide10(response->data[20]);
+  m_engineData.ignitionAdvance = calcValueDivide10(response->data[20]);
 
   return ESP_OK;
 }
 
-esp_err_t update_data_from_table_11() {
-  command_result_t* response = update_data_from_table(0x11);
+esp_err_t updateDataFromTable11() {
+  CommandResult_t* response = updateDataFromTable(0x11);
   if (response == NULL) { return ESP_FAIL; }
   if (response->len != 0x19) { return ESP_FAIL; }
 
@@ -108,7 +78,7 @@ esp_err_t update_data_from_table_11() {
   m_vehicleData.batteryVolts = calcValueDivide10(response->data[16]);
   m_vehicleData.speed = response->data[17];
   m_engineData.fuelInject = (response->data[18] << 8) + response->data[19];
-  m_engineData.ignitionAngle = calcValueDivide10(response->data[20]);
+  m_engineData.ignitionAdvance = calcValueDivide10(response->data[20]);
 
   m_unknownData.unkData1 = response->data[21];
   m_unknownData.unkData2 = response->data[22];
@@ -117,8 +87,8 @@ esp_err_t update_data_from_table_11() {
   return ESP_OK;
 }
 
-esp_err_t update_data_from_table_20() {
-  command_result_t* response = update_data_from_table(0x20);
+esp_err_t updateDataFromTable20() {
+  CommandResult_t* response = updateDataFromTable(0x20);
   if (response == NULL) { return ESP_FAIL; }
   if (response->len != 0x8) { return ESP_FAIL; }
 
@@ -129,8 +99,8 @@ esp_err_t update_data_from_table_20() {
   return ESP_OK;
 }
 
-esp_err_t update_data_from_table_21() {
-  command_result_t* response = update_data_from_table(0x21);
+esp_err_t updateDataFromTable21() {
+  CommandResult_t* response = updateDataFromTable(0x21);
   if (response == NULL) { return ESP_FAIL; }
   if (response->len != 0xb) { return ESP_FAIL; }
 
@@ -144,8 +114,8 @@ esp_err_t update_data_from_table_21() {
   return ESP_OK;
 }
 
-esp_err_t update_data_from_table_D0() {
-  command_result_t* response = update_data_from_table(0xD0);
+esp_err_t updateDataFromTableD0() {
+  CommandResult_t* response = updateDataFromTable(0xD0);
   if (response == NULL) { return ESP_FAIL; }
   if (response->len != 0x13) { return ESP_FAIL; }
 
@@ -167,8 +137,8 @@ esp_err_t update_data_from_table_D0() {
   return ESP_OK;
 }
 
-esp_err_t update_data_from_table_D1() {
-  command_result_t* response = update_data_from_table(0xD1);
+esp_err_t updateDataFromTableD1() {
+  CommandResult_t* response = updateDataFromTable(0xD1);
   if (response == NULL) { return ESP_FAIL; }
   if (response->len != 0xb) { return ESP_FAIL; }
 
@@ -183,21 +153,68 @@ esp_err_t update_data_from_table_D1() {
   return ESP_OK;
 }
 
-void spin_once() {
-  if (m_enableTable10) { update_data_from_table_10(); }
-  if (m_enableTable11) { update_data_from_table_11(); }
-  if (m_enableTable20) { update_data_from_table_20(); }
-  if (m_enableTable21) { update_data_from_table_21(); }
-
-  update_data_from_table_D0();
-  update_data_from_table_D1();
+esp_err_t connectToEcu() {
+  return connect();
 }
 
-void detect_active_tables() {
-  update_data_from_table_0();
+void detectActiveTables() {
+  updateDataFromTable0();
 
-  if (update_data_from_table_10()) { m_enableTable10 = true; }
-  if (update_data_from_table_11()) { m_enableTable11 = true; }
-  if (update_data_from_table_20()) { m_enableTable20 = true; }
-  if (update_data_from_table_21()) { m_enableTable21 = true; }
+  if (updateDataFromTable10()) { m_enableTable10 = 1; }
+  if (updateDataFromTable11()) { m_enableTable11 = 1; }
+  if (updateDataFromTable20()) { m_enableTable20 = 1; }
+  if (updateDataFromTable21()) { m_enableTable21 = 1; }
+}
+
+void test() {
+  uint8_t address = 0x0;
+
+  for (size_t i = 0; i <= 255; i++) {
+    uint8_t message[5] = {0x72, 0x05, 0x71, address, 0x00};
+    message[4] = calcChecksum(message, 4);
+
+    address++;
+
+    writeData(message, 5);
+    readData();
+  }
+}
+
+void updateAllData() {
+  if (m_enableTable10 == 1) { updateDataFromTable10(); }
+  if (m_enableTable11 == 1) { updateDataFromTable11(); }
+  if (m_enableTable20 == 1) { updateDataFromTable20(); }
+  if (m_enableTable21 == 1) { updateDataFromTable21(); }
+
+  updateDataFromTableD0();
+  updateDataFromTableD1();
+}
+
+char* getId() {
+  return m_id;
+}
+
+EngineData_t getEngineData() {
+  updateAllData();
+  return m_engineData;
+}
+
+SensorsData_t getSensorsData() {
+  updateAllData();
+  return m_sensorsData;
+}
+
+VehicleData_t getVehicleData() {
+  updateAllData();
+  return m_vehicleData;
+}
+
+ErrorData_t getErrorData() {
+  updateAllData();
+  return m_errorData;
+}
+
+UnknownData_t getUnknownData() {
+  updateAllData();
+  return m_unknownData;
 }

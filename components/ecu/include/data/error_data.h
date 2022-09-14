@@ -6,4 +6,4 @@
 
 typedef struct {
 
-} error_data_t;
+} ErrorData_t;

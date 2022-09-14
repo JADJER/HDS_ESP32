@@ -12,7 +12,9 @@
 #define UART_RX 16
 #define UART_TX 17
 #define UART_PORT_NUM 2
-#define UART_BUFF_SIZE 1024
+#define UART_BUFFER 200
+
+static QueueHandle_t m_uartQueue;
 
 void wakeup() {
   ESP_LOGI(TAG, "Wakeup ECU...");
@@ -20,7 +22,7 @@ void wakeup() {
   gpio_config_t io_conf = {
       .intr_type = GPIO_INTR_DISABLE,
       .mode = GPIO_MODE_OUTPUT,
-      .pin_bit_mask = 1ULL << UART_TX,
+      .pin_bit_mask = (1ULL << UART_TX),
       .pull_up_en = GPIO_PULLUP_ENABLE,
       .pull_down_en = GPIO_PULLDOWN_DISABLE,
   };
@@ -49,7 +51,7 @@ esp_err_t initialize() {
       .source_clk = UART_SCLK_APB,
   };
 
-  ESP_ERROR_CHECK(uart_driver_install(UART_PORT_NUM, UART_BUFF_SIZE, 0, 0, NULL, 0));
+  ESP_ERROR_CHECK(uart_driver_install(UART_PORT_NUM, UART_BUFFER, UART_BUFFER, 10, &m_uartQueue, 0));
   ESP_ERROR_CHECK(uart_param_config(UART_PORT_NUM, &uart_config));
   ESP_ERROR_CHECK(uart_set_pin(UART_PORT_NUM, UART_TX, UART_RX, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
 
@@ -61,7 +63,7 @@ esp_err_t initialize() {
   ESP_LOGI(TAG, "Send initialize message...");
   writeData(initializeMessage, sizeof(initializeMessage));
 
-  command_result_t* data = readData();
+  CommandResult_t* data = readData();
 
   if (data == NULL) { return ESP_FAIL; }
   if (data->code != 0x02) { return ESP_FAIL; }
@@ -79,22 +81,39 @@ esp_err_t connect() {
   return initialize();
 }
 
-command_result_t* readData() {
+CommandResult_t* readData() {
   //    Wait minimum package from uart
-  while (m_serial.available() < 4) {
-    delay(1);
+  {
+    size_t bufferDataLen = 0;
+    while (bufferDataLen < 4) {
+      ESP_ERROR_CHECK(uart_get_buffered_data_len(UART_PORT_NUM, &bufferDataLen));
+      vTaskDelay(1);
+    }
   }
 
-  uint8_t responseConfirm = m_serial.read();
-  uint8_t responseLength = m_serial.read();
-  uint8_t responseCommand = m_serial.read();
+  uint8_t responseConfirm;
+  uint8_t responseLength;
+  uint8_t responseCommand;
+
+  {
+    uint8_t* buffer = calloc(3, sizeof(uint8_t));
+    size_t len = uart_read_bytes(UART_PORT_NUM, &buffer, 3, portMAX_DELAY);
+    if (len != 3) {
+      ESP_LOGI(TAG, "Error read data from uart");
+      return NULL;
+    }
+
+    responseConfirm = buffer[0];
+    responseLength = buffer[1];
+    responseCommand = buffer[2];
+  }
 
   if (responseLength == 0) {
     ESP_LOGI(TAG, "The message is very small");
     return NULL;
   }
 
-  if (responseLength > UART_BUFF_SIZE) {
+  if (responseLength > UART_BUFFER) {
     ESP_LOGI(TAG, "The message is too big");
     return NULL;
   }
@@ -105,26 +124,45 @@ command_result_t* readData() {
   data[1] = responseLength;
   data[2] = responseCommand;
 
+  size_t responsePayloadLength = responseLength - 3;
+
   //    Wait full package from uart
-  while (m_serial.available() < (responseLength - 3)) {
-    delay(1);
+  {
+    size_t bufferDataLen = 0;
+    while (bufferDataLen < responsePayloadLength) {
+      ESP_ERROR_CHECK(uart_get_buffered_data_len(UART_PORT_NUM, &bufferDataLen));
+      vTaskDelay(1);
+    }
   }
 
+  ESP_LOGI(TAG, "Response length: %d", responseLength);
+  ESP_LOGI(TAG, "Response payload length: %d", responsePayloadLength);
+
   //    Read package data from uart
-  for (size_t i = 3; i < responseLength; i++) {
-    uint8_t value = m_serial.read();
-    data[i] = value;
+  {
+    uint8_t* buffer = calloc(responsePayloadLength, sizeof(uint8_t));
+    size_t len = uart_read_bytes(UART_PORT_NUM, &buffer, responsePayloadLength, portMAX_DELAY);
+    if (len != responsePayloadLength) {
+      ESP_LOGI(TAG, "Error read data from uart");
+      return NULL;
+    }
+
+    for (size_t i = 0; i < responsePayloadLength; i++) {
+      ESP_LOGI(TAG, "%d = %d", i + 3, i);
+      ESP_LOGI(TAG, "Buffer[%d] = %d", i, buffer[i]);
+
+      data[i + 3] = buffer[i];
+    }
   }
 
   uint8_t responseChecksum = data[responseLength - 1];
   uint8_t calculatedChecksum = calcChecksum(data, responseLength - 1);
-
   if (responseChecksum != calculatedChecksum) {
     ESP_LOGI(TAG, "The checksum does not match");
     return NULL;
   }
 
-  command_result_t* result = calloc(1, sizeof(command_result_t));
+  CommandResult_t* result = calloc(1, sizeof(CommandResult_t));
   result->code = responseConfirm;
   result->command = responseCommand;
   result->checksum = responseChecksum;
@@ -141,16 +179,18 @@ void writeData(uint8_t const* data, size_t len) {
 
   uart_write_bytes(UART_PORT_NUM, data, len);
 
-  while (m_serial.available() < len) {
-    delay(1);
+  size_t bufferDataLen = 0;
+  while (bufferDataLen < len) {
+    ESP_ERROR_CHECK(uart_get_buffered_data_len(UART_PORT_NUM, &bufferDataLen));
+    vTaskDelay(1);
   }
 
-  for (size_t i = 0; i < len; i++) {
-    uint8_t nextValue = m_serial.peek();
-    if (nextValue == data[i]) {
-      m_serial.read();
-    }
-  }
+//  for (size_t i = 0; i < len; i++) {
+//    uint8_t nextValue = m_serial.peek();
+//    if (nextValue == data[i]) {
+//      m_serial.read();
+//    }
+//  }
 
 //  log_buf_d(data, len);
 }

@@ -5,9 +5,8 @@ set(SOURCES
 set(COMPONENTS
         nvs_flash
         ecu
-        honda_protocol
-        indicator
-        mesh
+#        indicator
+#        mesh
         )
 
 idf_component_register(SRCS ${SOURCES} INCLUDE_DIRS . REQUIRES ${COMPONENTS})

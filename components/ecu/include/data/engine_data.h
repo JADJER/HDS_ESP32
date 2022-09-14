@@ -6,9 +6,9 @@
 
 typedef struct {
   int rpm;
-  int fuel_inject;
-  float ignition_angle;
+  int fuelInject;
+  float ignitionAdvance;
   int unk_data_1;
   int unk_data_2;
   int unk_data_3;
-} engine_data_t;
+} EngineData_t;

@@ -5,7 +5,7 @@
 #pragma once
 
 typedef struct {
-  float battery_volts;
+  float batteryVolts;
   int speed;
   int state;
-} vehicle_data_t;
+} VehicleData_t;

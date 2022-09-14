@@ -11,14 +11,59 @@
 #include "data/vehicle_data.h"
 #include <esp_err.h>
 
-esp_err_t connect();
+/**
+ * @brief
+ * @return
+ */
+esp_err_t connectToEcu();
 
-void detect_active_tables();
+/**
+ * @brief
+ */
+void detectActiveTables();
+
+/**
+ * @brief
+ */
 void test();
 
-char* get_id();
-vehicle_data_t get_vehicle_data();
-engine_data_t get_engine_data();
-sensors_data_t get_sensors_data();
-error_data_t get_error_data();
-unknown_data_t get_unknown_data();
+/**
+ * @brief
+ */
+void updateAllData();
+
+/**
+ * @brief
+ * @return
+ */
+char* getId();
+
+/**
+ * @brief
+ * @return
+ */
+VehicleData_t getVehicleData();
+
+/**
+ * @brief
+ * @return
+ */
+EngineData_t getEngineData();
+
+/**
+ * @brief
+ * @return
+ */
+SensorsData_t getSensorsData();
+
+/**
+ * @brief
+ * @return
+ */
+ErrorData_t getErrorData();
+
+/**
+ * @brief
+ * @return
+ */
+UnknownData_t getUnknownData();

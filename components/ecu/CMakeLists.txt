@@ -1,9 +1,10 @@
 set(SOURCES
         utils.c
+        protocol.c
         ecu.c)
 
 set(COMPONENTS
-        honda_protocol
+        driver
         )
 
 idf_component_register(SRCS ${SOURCES} INCLUDE_DIRS include REQUIRES ${COMPONENTS})

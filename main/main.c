@@ -1,7 +1,6 @@
 #include "ecu.h"
-#include "indicator.h"
-#include "mesh.h"
-#include "protocol.h"
+//#include "indicator.h"
+//#include "mesh.h"
 #include <esp_err.h>
 #include <esp_log.h>
 
@@ -11,6 +10,13 @@ void app_main() {
   esp_err_t err;
 
   ESP_LOGI(TAG, "Initializing...");
+
+  err = connectToEcu();
+
+  detectActiveTables();
+
+  test();
+
 
   //  ble_mesh_get_dev_uuid(deviceUuid);
 }

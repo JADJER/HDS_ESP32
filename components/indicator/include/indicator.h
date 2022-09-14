@@ -7,7 +7,7 @@
 typedef enum {
   LED_ENABLE,
   LED_DISABLE
-} led_state;
+} LedState;
 
-void enable(led_state enable);
+void enable(LedState enable);
 void blink(int delayMs);

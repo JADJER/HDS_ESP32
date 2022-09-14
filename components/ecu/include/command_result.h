@@ -12,4 +12,4 @@ typedef struct {
   uint8_t checksum;
   uint8_t* data;
   size_t len;
-} command_result_t;
+} CommandResult_t;
