@@ -96,8 +96,9 @@ CommandResult_t* readData() {
   uint8_t responseCommand;
 
   {
-    uint8_t* buffer = calloc(3, sizeof(uint8_t));
-    size_t len = uart_read_bytes(UART_PORT_NUM, &buffer, 3, portMAX_DELAY);
+    uint8_t buffer[3];
+
+    size_t len = uart_read_bytes(UART_PORT_NUM, buffer, 3, portMAX_DELAY);
     if (len != 3) {
       ESP_LOGI(TAG, "Error read data from uart");
       return NULL;
@@ -119,7 +120,7 @@ CommandResult_t* readData() {
   }
 
   //    Create buffer for read
-  uint8_t *data = calloc(responseLength, sizeof (uint8_t));
+  uint8_t* data = (uint8_t*) malloc(responseLength * sizeof(uint8_t));
   data[0] = responseConfirm;
   data[1] = responseLength;
   data[2] = responseCommand;
@@ -135,22 +136,17 @@ CommandResult_t* readData() {
     }
   }
 
-  ESP_LOGI(TAG, "Response length: %d", responseLength);
-  ESP_LOGI(TAG, "Response payload length: %d", responsePayloadLength);
-
   //    Read package data from uart
   {
-    uint8_t* buffer = calloc(responsePayloadLength, sizeof(uint8_t));
-    size_t len = uart_read_bytes(UART_PORT_NUM, &buffer, responsePayloadLength, portMAX_DELAY);
+    uint8_t buffer[responsePayloadLength];
+
+    size_t len = uart_read_bytes(UART_PORT_NUM, buffer, responsePayloadLength, portMAX_DELAY);
     if (len != responsePayloadLength) {
       ESP_LOGI(TAG, "Error read data from uart");
       return NULL;
     }
 
     for (size_t i = 0; i < responsePayloadLength; i++) {
-      ESP_LOGI(TAG, "%d = %d", i + 3, i);
-      ESP_LOGI(TAG, "Buffer[%d] = %d", i, buffer[i]);
-
       data[i + 3] = buffer[i];
     }
   }
@@ -162,14 +158,14 @@ CommandResult_t* readData() {
     return NULL;
   }
 
-  CommandResult_t* result = calloc(1, sizeof(CommandResult_t));
+  CommandResult_t* result = (CommandResult_t*) malloc(sizeof(CommandResult_t));
   result->code = responseConfirm;
   result->command = responseCommand;
   result->checksum = responseChecksum;
   result->data = data;
   result->len = responseLength;
 
-//  log_buf_d(data, responseLength);
+  ESP_LOG_BUFFER_HEX(TAG, data, responseLength);
 
   return result;
 }
@@ -179,18 +175,16 @@ void writeData(uint8_t const* data, size_t len) {
 
   uart_write_bytes(UART_PORT_NUM, data, len);
 
+  //  Wait echo data from ECU
   size_t bufferDataLen = 0;
   while (bufferDataLen < len) {
     ESP_ERROR_CHECK(uart_get_buffered_data_len(UART_PORT_NUM, &bufferDataLen));
     vTaskDelay(1);
   }
 
-//  for (size_t i = 0; i < len; i++) {
-//    uint8_t nextValue = m_serial.peek();
-//    if (nextValue == data[i]) {
-//      m_serial.read();
-//    }
-//  }
+  //  Echo data's delete from RX buffer
+  uint8_t buffer[len];
+  uart_read_bytes(UART_PORT_NUM, buffer, len, portMAX_DELAY);
 
-//  log_buf_d(data, len);
+  ESP_LOG_BUFFER_HEX(TAG, data, len);
 }
