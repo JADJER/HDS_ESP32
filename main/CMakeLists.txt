@@ -5,7 +5,7 @@ set(SOURCES
 set(COMPONENTS
         nvs_flash
         ecu
-#        indicator
+        indicator
 #        mesh
         )
 

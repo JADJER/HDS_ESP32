@@ -12,14 +12,14 @@
  * @param handle
  * @return
  */
-esp_err_t connect();
+esp_err_t Protocol_connect();
 
 /**
  * @brief
  * @param handle
  * @return
  */
-CommandResult_t* readData();
+CommandResult_t* Protocol_readData();
 
 /**
  * @brief
@@ -27,4 +27,4 @@ CommandResult_t* readData();
  * @param data
  * @param len
  */
-void writeData(uint8_t const* data, size_t len);
+void Protocol_writeData(uint8_t const* data, size_t len);

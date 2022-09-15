@@ -15,55 +15,55 @@
  * @brief
  * @return
  */
-esp_err_t connectToEcu();
+esp_err_t ECU_connect();
 
 /**
  * @brief
  */
-void detectActiveTables();
+void ECU_detectAllTables();
 
 /**
  * @brief
  */
-void test();
+void ECU_detectActiveTables();
 
 /**
  * @brief
  */
-void updateAllData();
-
-/**
- * @brief
- * @return
- */
-char* getId();
+void ECU_updateAllData();
 
 /**
  * @brief
  * @return
  */
-VehicleData_t getVehicleData();
+char* ECU_getId();
 
 /**
  * @brief
  * @return
  */
-EngineData_t getEngineData();
+VehicleData_t ECU_getVehicleData();
 
 /**
  * @brief
  * @return
  */
-SensorsData_t getSensorsData();
+EngineData_t ECU_getEngineData();
 
 /**
  * @brief
  * @return
  */
-ErrorData_t getErrorData();
+SensorsData_t ECU_getSensorsData();
 
 /**
  * @brief
  * @return
  */
-UnknownData_t getUnknownData();
+ErrorData_t ECU_getErrorData();
+
+/**
+ * @brief
+ * @return
+ */
+UnknownData_t ECU_getUnknownData();

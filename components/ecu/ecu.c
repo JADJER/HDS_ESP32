@@ -7,7 +7,7 @@
 #include "protocol.h"
 #include "utils.h"
 
-static char * m_id;
+static char* m_id;
 static VehicleData_t m_vehicleData;
 static EngineData_t m_engineData;
 static SensorsData_t m_sensorsData;
@@ -22,19 +22,23 @@ CommandResult_t* updateDataFromTable(uint8_t table) {
   uint8_t message[5] = {0x72, 0x05, 0x71, table, 0x00};
   message[4] = calcChecksum(message, 4);
 
-  writeData(message, 5);
+  Protocol_writeData(message, 5);
 
-  return readData();
+  return Protocol_readData();
 }
 
 esp_err_t updateDataFromTable0() {
   CommandResult_t* response = updateDataFromTable(0x0);
   if (response == NULL) { return ESP_FAIL; }
-  if (response->len != 0xf) { return ESP_FAIL; }
+  if (response->len != 0xf) {
+    free(response->data);
+    free(response);
+    return ESP_FAIL;
+  }
 
-//  for (size_t i = 4; i < response->len - 1; i++) {
-//    m_id += std::to_string(static_cast<int>(response->data[i]));
-//  }
+  //  for (size_t i = 4; i < response->len - 1; i++) {
+  //    m_id += std::to_string(static_cast<int>(response->data[i]));
+  //  }
 
   return ESP_OK;
 }
@@ -42,7 +46,11 @@ esp_err_t updateDataFromTable0() {
 esp_err_t updateDataFromTable10() {
   CommandResult_t* response = updateDataFromTable(0x10);
   if (response == NULL) { return ESP_FAIL; }
-  if (response->len != 0x16) { return ESP_FAIL; }
+  if (response->len != 0x16) {
+    free(response->data);
+    free(response);
+    return ESP_FAIL;
+  }
 
   m_engineData.rpm = (response->data[4] << 8) + response->data[5];
   m_sensorsData.tpsVolts = calcValueDivide256(response->data[6]);
@@ -153,20 +161,11 @@ esp_err_t updateDataFromTableD1() {
   return ESP_OK;
 }
 
-esp_err_t connectToEcu() {
-  return connect();
+esp_err_t ECU_connect() {
+  return Protocol_connect();
 }
 
-void detectActiveTables() {
-  updateDataFromTable0();
-
-  if (updateDataFromTable10()) { m_enableTable10 = 1; }
-  if (updateDataFromTable11()) { m_enableTable11 = 1; }
-  if (updateDataFromTable20()) { m_enableTable20 = 1; }
-  if (updateDataFromTable21()) { m_enableTable21 = 1; }
-}
-
-void test() {
+void ECU_detectAllTables() {
   uint8_t address = 0x0;
 
   for (size_t i = 0; i <= 255; i++) {
@@ -175,12 +174,21 @@ void test() {
 
     address++;
 
-    writeData(message, 5);
-    readData();
+    Protocol_writeData(message, 5);
+    Protocol_readData();
   }
 }
 
-void updateAllData() {
+void ECU_detectActiveTables() {
+  updateDataFromTable0();
+
+  if (updateDataFromTable10()) { m_enableTable10 = 1; }
+  if (updateDataFromTable11()) { m_enableTable11 = 1; }
+  if (updateDataFromTable20()) { m_enableTable20 = 1; }
+  if (updateDataFromTable21()) { m_enableTable21 = 1; }
+}
+
+void ECU_updateAllData() {
   if (m_enableTable10 == 1) { updateDataFromTable10(); }
   if (m_enableTable11 == 1) { updateDataFromTable11(); }
   if (m_enableTable20 == 1) { updateDataFromTable20(); }
@@ -190,31 +198,31 @@ void updateAllData() {
   updateDataFromTableD1();
 }
 
-char* getId() {
+char* ECU_getId() {
   return m_id;
 }
 
-EngineData_t getEngineData() {
-  updateAllData();
-  return m_engineData;
-}
-
-SensorsData_t getSensorsData() {
-  updateAllData();
-  return m_sensorsData;
-}
-
-VehicleData_t getVehicleData() {
-  updateAllData();
+VehicleData_t ECU_getVehicleData() {
+  ECU_updateAllData();
   return m_vehicleData;
 }
 
-ErrorData_t getErrorData() {
-  updateAllData();
+EngineData_t ECU_getEngineData() {
+  ECU_updateAllData();
+  return m_engineData;
+}
+
+SensorsData_t ECU_getSensorsData() {
+  ECU_updateAllData();
+  return m_sensorsData;
+}
+
+ErrorData_t ECU_getErrorData() {
+  ECU_updateAllData();
   return m_errorData;
 }
 
-UnknownData_t getUnknownData() {
-  updateAllData();
+UnknownData_t ECU_getUnknownData() {
+  ECU_updateAllData();
   return m_unknownData;
 }

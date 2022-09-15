@@ -4,10 +4,27 @@
 
 #pragma once
 
-typedef enum {
-  LED_ENABLE,
-  LED_DISABLE
-} LedState;
+#include <esp_err.h>
 
-void enable(LedState enable);
-void blink(int delayMs);
+/**
+ * @brief
+ * @return
+ */
+esp_err_t indicatorInit();
+
+/**
+ * @brief
+ * @param enable
+ */
+esp_err_t indicatorEnable();
+
+/**
+ * @brief
+ */
+esp_err_t indicatorDisable();
+
+/**
+ * @brief
+ * @param delayMs
+ */
+void indicatorBlink(int delayMs);

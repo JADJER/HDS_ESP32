@@ -17,9 +17,7 @@
 static QueueHandle_t m_uartQueue;
 
 void wakeup() {
-  ESP_LOGI(TAG, "Wakeup ECU...");
-
-  gpio_config_t io_conf = {
+  gpio_config_t pinConfig = {
       .intr_type = GPIO_INTR_DISABLE,
       .mode = GPIO_MODE_OUTPUT,
       .pin_bit_mask = (1ULL << UART_TX),
@@ -27,18 +25,15 @@ void wakeup() {
       .pull_down_en = GPIO_PULLDOWN_DISABLE,
   };
 
-  gpio_config(&io_conf);
-
-  gpio_set_level(UART_TX, 0);
+  ESP_ERROR_CHECK(gpio_config(&pinConfig));
+  ESP_LOGI(TAG, "Wakeup ECU...");
+  ESP_ERROR_CHECK(gpio_set_level(UART_TX, 0));
   vTaskDelay(70);
-
-  gpio_set_level(UART_TX, 1);
+  ESP_ERROR_CHECK(gpio_set_level(UART_TX, 1));
   vTaskDelay(130);
 }
 
 esp_err_t initialize() {
-  ESP_LOGI(TAG, "Initialize ECU...");
-
   uint8_t wakeupMessage[] = {0xFE, 0x04, 0xFF, 0xFF};
   uint8_t initializeMessage[] = {0x72, 0x05, 0x00, 0xF0, 0x99};
 
@@ -51,45 +46,48 @@ esp_err_t initialize() {
       .source_clk = UART_SCLK_APB,
   };
 
+  ESP_LOGI(TAG, "Initialize ECU...");
   ESP_ERROR_CHECK(uart_driver_install(UART_PORT_NUM, UART_BUFFER, UART_BUFFER, 10, &m_uartQueue, 0));
   ESP_ERROR_CHECK(uart_param_config(UART_PORT_NUM, &uart_config));
   ESP_ERROR_CHECK(uart_set_pin(UART_PORT_NUM, UART_TX, UART_RX, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
 
   ESP_LOGI(TAG, "Send wakeup message...");
-  writeData(wakeupMessage, sizeof(wakeupMessage));
+  Protocol_writeData(wakeupMessage, sizeof(wakeupMessage));
 
   vTaskDelay(20);
 
   ESP_LOGI(TAG, "Send initialize message...");
-  writeData(initializeMessage, sizeof(initializeMessage));
+  Protocol_writeData(initializeMessage, sizeof(initializeMessage));
 
-  CommandResult_t* data = readData();
+  CommandResult_t* data = Protocol_readData();
 
-  if (data == NULL) { return ESP_FAIL; }
-  if (data->code != 0x02) { return ESP_FAIL; }
-  if (data->len != 0x04) { return ESP_FAIL; }
-  if (data->command != 0x00) { return ESP_FAIL; }
-  if (data->checksum != 0xFA) { return ESP_FAIL; }
+  if (data == NULL) { return ESP_ERR_INVALID_RESPONSE; }
+  if (data->code != 0x02) { return ESP_ERR_INVALID_RESPONSE; }
+  if (data->len != 0x04) { return ESP_ERR_INVALID_SIZE; }
+  if (data->command != 0x00) { return ESP_ERR_INVALID_ARG; }
+  if (data->checksum != 0xFA) { return ESP_ERR_INVALID_CRC; }
 
   return ESP_OK;
 }
 
-esp_err_t connect() {
+void waitDataFromUart(size_t len) {
+  size_t bufferDataLen = 0;
+  while (bufferDataLen < len) {
+    ESP_ERROR_CHECK(uart_get_buffered_data_len(UART_PORT_NUM, &bufferDataLen));
+    vTaskDelay(1);
+  }
+}
+
+esp_err_t Protocol_connect() {
   ESP_LOGI(TAG, "Connect to ECU:");
 
   wakeup();
   return initialize();
 }
 
-CommandResult_t* readData() {
+CommandResult_t* Protocol_readData() {
   //    Wait minimum package from uart
-  {
-    size_t bufferDataLen = 0;
-    while (bufferDataLen < 4) {
-      ESP_ERROR_CHECK(uart_get_buffered_data_len(UART_PORT_NUM, &bufferDataLen));
-      vTaskDelay(1);
-    }
-  }
+  waitDataFromUart(4);
 
   uint8_t responseConfirm;
   uint8_t responseLength;
@@ -128,13 +126,7 @@ CommandResult_t* readData() {
   size_t responsePayloadLength = responseLength - 3;
 
   //    Wait full package from uart
-  {
-    size_t bufferDataLen = 0;
-    while (bufferDataLen < responsePayloadLength) {
-      ESP_ERROR_CHECK(uart_get_buffered_data_len(UART_PORT_NUM, &bufferDataLen));
-      vTaskDelay(1);
-    }
-  }
+  waitDataFromUart(responsePayloadLength);
 
   //    Read package data from uart
   {
@@ -170,17 +162,13 @@ CommandResult_t* readData() {
   return result;
 }
 
-void writeData(uint8_t const* data, size_t len) {
+void Protocol_writeData(uint8_t const* data, size_t len) {
   ESP_ERROR_CHECK(uart_flush(UART_PORT_NUM));
 
   uart_write_bytes(UART_PORT_NUM, data, len);
 
   //  Wait echo data from ECU
-  size_t bufferDataLen = 0;
-  while (bufferDataLen < len) {
-    ESP_ERROR_CHECK(uart_get_buffered_data_len(UART_PORT_NUM, &bufferDataLen));
-    vTaskDelay(1);
-  }
+  waitDataFromUart(len);
 
   //  Echo data's delete from RX buffer
   uint8_t buffer[len];
