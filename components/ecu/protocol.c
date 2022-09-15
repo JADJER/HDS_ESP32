@@ -28,9 +28,9 @@ void wakeup() {
   ESP_ERROR_CHECK(gpio_config(&pinConfig));
   ESP_LOGI(TAG, "Wakeup ECU...");
   ESP_ERROR_CHECK(gpio_set_level(UART_TX, 0));
-  vTaskDelay(70);
+  vTaskDelay(70 / portTICK_PERIOD_MS);
   ESP_ERROR_CHECK(gpio_set_level(UART_TX, 1));
-  vTaskDelay(130);
+  vTaskDelay(130 / portTICK_PERIOD_MS);
 }
 
 esp_err_t initialize() {
@@ -54,7 +54,7 @@ esp_err_t initialize() {
   ESP_LOGI(TAG, "Send wakeup message...");
   protocolWriteData(wakeupMessage, sizeof(wakeupMessage));
 
-  vTaskDelay(20);
+  vTaskDelay(20 / portTICK_PERIOD_MS);
 
   ESP_LOGI(TAG, "Send initialize message...");
   protocolWriteData(initializeMessage, sizeof(initializeMessage));
