@@ -24,7 +24,11 @@ void app_main() {
   err = ecuConnect();
   if (err) {
     ESP_LOGE(TAG, "Connect failed to Honda ECU (err %d)", err);
-    indicatorBlinkErrorCode(1);
+
+    if (err == ESP_ERR_INVALID_RESPONSE) { indicatorBlinkErrorCode(1); }
+    if (err == ESP_ERR_INVALID_SIZE) { indicatorBlinkErrorCode(2); }
+    if (err == ESP_ERR_INVALID_ARG) { indicatorBlinkErrorCode(3); }
+    if (err == ESP_ERR_INVALID_CRC) { indicatorBlinkErrorCode(4); }
     return;
   }
 
@@ -37,14 +41,14 @@ void app_main() {
   err = bluetoothInit();
   if (err) {
     ESP_LOGE(TAG, "Bluetooth init failed (err %d)", err);
-    indicatorBlinkErrorCode(2);
+    indicatorBlinkErrorCode(5);
     return;
   }
 
   err = meshInit();
   if (err) {
     ESP_LOGE(TAG, "Mesh init failed (err %d)", err);
-    indicatorBlinkErrorCode(3);
+    indicatorBlinkErrorCode(6);
     return;
   }
 
