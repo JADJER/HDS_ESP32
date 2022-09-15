@@ -1,5 +1,7 @@
 set(SOURCES
-        mesh.c)
+        mesh.c
+        bluetooth.c
+        )
 
 set(COMPONENTS
         bt

@@ -22,9 +22,9 @@ CommandResult_t* updateDataFromTable(uint8_t table) {
   uint8_t message[5] = {0x72, 0x05, 0x71, table, 0x00};
   message[4] = calcChecksum(message, 4);
 
-  Protocol_writeData(message, 5);
+  protocolWriteData(message, 5);
 
-  return Protocol_readData();
+  return protocolReadData();
 }
 
 esp_err_t updateDataFromTable0() {
@@ -161,11 +161,11 @@ esp_err_t updateDataFromTableD1() {
   return ESP_OK;
 }
 
-esp_err_t ECU_connect() {
-  return Protocol_connect();
+esp_err_t ecuConnect() {
+  return protocolConnect();
 }
 
-void ECU_detectAllTables() {
+void ecuDetectAllTables() {
   uint8_t address = 0x0;
 
   for (size_t i = 0; i <= 255; i++) {
@@ -174,12 +174,12 @@ void ECU_detectAllTables() {
 
     address++;
 
-    Protocol_writeData(message, 5);
-    Protocol_readData();
+    protocolWriteData(message, 5);
+    protocolReadData();
   }
 }
 
-void ECU_detectActiveTables() {
+void ecuDetectActiveTables() {
   updateDataFromTable0();
 
   if (updateDataFromTable10()) { m_enableTable10 = 1; }
@@ -188,7 +188,7 @@ void ECU_detectActiveTables() {
   if (updateDataFromTable21()) { m_enableTable21 = 1; }
 }
 
-void ECU_updateAllData() {
+void ecuUpdateAllData() {
   if (m_enableTable10 == 1) { updateDataFromTable10(); }
   if (m_enableTable11 == 1) { updateDataFromTable11(); }
   if (m_enableTable20 == 1) { updateDataFromTable20(); }
@@ -198,31 +198,31 @@ void ECU_updateAllData() {
   updateDataFromTableD1();
 }
 
-char* ECU_getId() {
+char* ecuGetId() {
   return m_id;
 }
 
-VehicleData_t ECU_getVehicleData() {
-  ECU_updateAllData();
+VehicleData_t ecuGetVehicleData() {
+  ecuUpdateAllData();
   return m_vehicleData;
 }
 
-EngineData_t ECU_getEngineData() {
-  ECU_updateAllData();
+EngineData_t ecuGetEngineData() {
+  ecuUpdateAllData();
   return m_engineData;
 }
 
-SensorsData_t ECU_getSensorsData() {
-  ECU_updateAllData();
+SensorsData_t ecuGetSensorsData() {
+  ecuUpdateAllData();
   return m_sensorsData;
 }
 
-ErrorData_t ECU_getErrorData() {
-  ECU_updateAllData();
+ErrorData_t ecuGetErrorData() {
+  ecuUpdateAllData();
   return m_errorData;
 }
 
-UnknownData_t ECU_getUnknownData() {
-  ECU_updateAllData();
+UnknownData_t ecuGetUnknownData() {
+  ecuUpdateAllData();
   return m_unknownData;
 }

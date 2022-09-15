@@ -52,14 +52,14 @@ esp_err_t initialize() {
   ESP_ERROR_CHECK(uart_set_pin(UART_PORT_NUM, UART_TX, UART_RX, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
 
   ESP_LOGI(TAG, "Send wakeup message...");
-  Protocol_writeData(wakeupMessage, sizeof(wakeupMessage));
+  protocolWriteData(wakeupMessage, sizeof(wakeupMessage));
 
   vTaskDelay(20);
 
   ESP_LOGI(TAG, "Send initialize message...");
-  Protocol_writeData(initializeMessage, sizeof(initializeMessage));
+  protocolWriteData(initializeMessage, sizeof(initializeMessage));
 
-  CommandResult_t* data = Protocol_readData();
+  CommandResult_t* data = protocolReadData();
 
   if (data == NULL) { return ESP_ERR_INVALID_RESPONSE; }
   if (data->code != 0x02) { return ESP_ERR_INVALID_RESPONSE; }
@@ -78,14 +78,14 @@ void waitDataFromUart(size_t len) {
   }
 }
 
-esp_err_t Protocol_connect() {
+esp_err_t protocolConnect() {
   ESP_LOGI(TAG, "Connect to ECU:");
 
   wakeup();
   return initialize();
 }
 
-CommandResult_t* Protocol_readData() {
+CommandResult_t* protocolReadData() {
   //    Wait minimum package from uart
   waitDataFromUart(4);
 
@@ -162,7 +162,7 @@ CommandResult_t* Protocol_readData() {
   return result;
 }
 
-void Protocol_writeData(uint8_t const* data, size_t len) {
+void protocolWriteData(uint8_t const* data, size_t len) {
   ESP_ERROR_CHECK(uart_flush(UART_PORT_NUM));
 
   uart_write_bytes(UART_PORT_NUM, data, len);

@@ -3,3 +3,8 @@
 //
 
 #include "mesh.h"
+
+esp_err_t meshInit() {
+
+  return ESP_OK;
+}

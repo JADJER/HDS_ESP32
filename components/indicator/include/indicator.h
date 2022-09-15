@@ -28,3 +28,9 @@ esp_err_t indicatorDisable();
  * @param delayMs
  */
 void indicatorBlink(int delayMs);
+
+/**
+ * @brief
+ * @param code
+ */
+void indicatorBlinkErrorCode(uint8_t code);
