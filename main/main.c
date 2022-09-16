@@ -2,11 +2,18 @@
 #include "ecu.h"
 #include "indicator.h"
 #include "mesh.h"
+#include "button.h"
 #include <esp_err.h>
 #include <esp_log.h>
 #include <esp_system.h>
 
 #define TAG "HDS"
+
+void testButton() {
+  indicatorBlink(500);
+  ecuDetectAllTables();
+  indicatorEnable();
+}
 
 void app_main() {
   esp_err_t err;
@@ -29,14 +36,9 @@ void app_main() {
     if (err == ESP_ERR_INVALID_SIZE) { indicatorBlinkErrorCode(2); }
     if (err == ESP_ERR_INVALID_ARG) { indicatorBlinkErrorCode(3); }
     if (err == ESP_ERR_INVALID_CRC) { indicatorBlinkErrorCode(4); }
+
     return;
   }
-
-  indicatorBlink(500);
-
-  ecuDetectActiveTables();
-
-  indicatorBlink(2000);
 
   err = bluetoothInit();
   if (err) {
@@ -52,6 +54,16 @@ void app_main() {
     return;
   }
 
+  err = buttonInit();
+  if (err) {
+    ESP_LOGE(TAG, "Test button init failed (err %d)", err);
+    indicatorBlinkErrorCode(7);
+  }
+
+  buttonSetInterruptCallback(testButton);
+
+  indicatorBlink(500);
+  ecuDetectActiveTables();
   indicatorEnable();
 
   //  ble_mesh_get_dev_uuid(deviceUuid);

@@ -6,6 +6,8 @@
 #include "command_result.h"
 #include "protocol.h"
 #include "utils.h"
+#include <freertos/FreeRTOS.h>
+#include <freertos/semphr.h>
 
 static char* m_id;
 static VehicleData_t m_vehicleData;
@@ -17,6 +19,8 @@ static uint8_t m_enableTable10 = 0;
 static uint8_t m_enableTable11 = 0;
 static uint8_t m_enableTable20 = 0;
 static uint8_t m_enableTable21 = 0;
+static SemaphoreHandle_t m_mutex = NULL;
+static uint8_t m_isInitialised = 0;
 
 CommandResult_t* updateDataFromTable(uint8_t table) {
   uint8_t message[5] = {0x72, 0x05, 0x71, table, 0x00};
@@ -162,10 +166,24 @@ esp_err_t updateDataFromTableD1() {
 }
 
 esp_err_t ecuConnect() {
-  return protocolConnect();
+  if (m_isInitialised) { return ESP_FAIL; }
+
+  m_mutex = xSemaphoreCreateMutex();
+  assert(m_mutex);
+
+  esp_err_t err = protocolConnect();
+  if (err == ESP_OK) {
+    m_isInitialised = 1;
+  }
+
+  return err;
 }
 
 void ecuDetectAllTables() {
+  if (!m_isInitialised) { return; }
+
+  xSemaphoreTake(m_mutex, portMAX_DELAY);
+
   uint8_t address = 0x0;
 
   for (size_t i = 0; i <= 255; i++) {
@@ -177,18 +195,30 @@ void ecuDetectAllTables() {
     protocolWriteData(message, 5);
     protocolReadData();
   }
+
+  xSemaphoreGive(m_mutex);
 }
 
 void ecuDetectActiveTables() {
+  if (!m_isInitialised) { return; }
+
+  xSemaphoreTake(m_mutex, portMAX_DELAY);
+
   updateDataFromTable0();
 
   if (updateDataFromTable10()) { m_enableTable10 = 1; }
   if (updateDataFromTable11()) { m_enableTable11 = 1; }
   if (updateDataFromTable20()) { m_enableTable20 = 1; }
   if (updateDataFromTable21()) { m_enableTable21 = 1; }
+
+  xSemaphoreGive(m_mutex);
 }
 
 void ecuUpdateAllData() {
+  if (!m_isInitialised) { return; }
+
+  xSemaphoreTake(m_mutex, portMAX_DELAY);
+
   if (m_enableTable10 == 1) { updateDataFromTable10(); }
   if (m_enableTable11 == 1) { updateDataFromTable11(); }
   if (m_enableTable20 == 1) { updateDataFromTable20(); }
@@ -196,6 +226,8 @@ void ecuUpdateAllData() {
 
   updateDataFromTableD0();
   updateDataFromTableD1();
+
+  xSemaphoreGive(m_mutex);
 }
 
 char* ecuGetId() {
@@ -203,26 +235,21 @@ char* ecuGetId() {
 }
 
 VehicleData_t ecuGetVehicleData() {
-  ecuUpdateAllData();
   return m_vehicleData;
 }
 
 EngineData_t ecuGetEngineData() {
-  ecuUpdateAllData();
   return m_engineData;
 }
 
 SensorsData_t ecuGetSensorsData() {
-  ecuUpdateAllData();
   return m_sensorsData;
 }
 
 ErrorData_t ecuGetErrorData() {
-  ecuUpdateAllData();
   return m_errorData;
 }
 
 UnknownData_t ecuGetUnknownData() {
-  ecuUpdateAllData();
   return m_unknownData;
 }

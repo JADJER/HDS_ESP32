@@ -20,6 +20,7 @@ static void blinkTask(void* arg) {
     enable = !enable;
 
     ESP_ERROR_CHECK(gpio_set_level(LED_PIN, enable));
+
     vTaskDelay(delay / portTICK_PERIOD_MS);
   }
 }
@@ -71,6 +72,7 @@ esp_err_t indicatorInit() {
 esp_err_t indicatorEnable() {
   if (m_taskHandle != NULL) {
     vTaskDelete(m_taskHandle);
+    m_taskHandle = NULL;
   }
 
   esp_err_t err = gpio_set_level(LED_PIN, 1);
@@ -81,6 +83,7 @@ esp_err_t indicatorEnable() {
 esp_err_t indicatorDisable() {
   if (m_taskHandle != NULL) {
     vTaskDelete(m_taskHandle);
+    m_taskHandle = NULL;
   }
 
   esp_err_t err = gpio_set_level(LED_PIN, 0);
@@ -91,6 +94,7 @@ esp_err_t indicatorDisable() {
 void indicatorBlink(int delayMs) {
   if (m_taskHandle != NULL) {
     vTaskDelete(m_taskHandle);
+    m_taskHandle = NULL;
   }
 
   xTaskCreate(blinkTask, "pin_blink_task", 1024, (void*) delayMs, configMAX_PRIORITIES, &m_taskHandle);
@@ -100,6 +104,7 @@ void indicatorBlink(int delayMs) {
 void indicatorBlinkErrorCode(uint8_t code) {
   if (m_taskHandle != NULL) {
     vTaskDelete(m_taskHandle);
+    m_taskHandle = NULL;
   }
 
   xTaskCreate(errorBlinkTask, "error_code_blink_task", 1024, (void*) code, configMAX_PRIORITIES, &m_taskHandle);
