@@ -8,3 +8,4 @@
 
 esp_err_t bluetoothInit();
 
+void bluetoothGetDeviceUUID(uint8_t* devUuid);

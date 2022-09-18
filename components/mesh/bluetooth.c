@@ -3,10 +3,13 @@
 //
 
 #include "bluetooth.h"
+#include <esp_ble_mesh_defs.h>
 #include <esp_bt.h>
+#include <esp_bt_device.h>
 #include <esp_bt_main.h>
 #include <esp_err.h>
 #include <esp_log.h>
+#include <string.h>
 
 #define TAG "Bluetooth"
 
@@ -40,4 +43,18 @@ esp_err_t bluetoothInit() {
   }
 
   return ret;
+}
+
+void bluetoothGetDeviceUUID(uint8_t* devUuid) {
+  if (devUuid == NULL) {
+    ESP_LOGE(TAG, "%s, Invalid device uuid", __func__);
+    return;
+  }
+
+  /* Copy device address to the device uuid with offset equals to 2 here.
+     * The first two bytes is used for matching device uuid by Provisioner.
+     * And using device address here is to avoid using the same device uuid
+     * by different unprovisioned devices.
+     */
+  memcpy(devUuid + 2, esp_bt_dev_get_address(), BD_ADDR_LEN);
 }
