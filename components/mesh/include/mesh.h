@@ -6,4 +6,4 @@
 
 #include <esp_err.h>
 
-esp_err_t meshInit();
+esp_err_t bluetoothMeshInit();
