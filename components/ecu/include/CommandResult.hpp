@@ -4,12 +4,12 @@
 
 #pragma once
 
-#include <stdlib.h>
+#include <Arduino.h>
 
-typedef struct {
+struct CommandResult {
   uint8_t code;
   uint8_t command;
   uint8_t checksum;
   uint8_t* data;
   size_t len;
-} CommandResult_t;
+};
