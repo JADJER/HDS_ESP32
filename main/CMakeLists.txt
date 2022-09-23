@@ -9,7 +9,6 @@ set(SOURCES
 
 set(COMPONENTS
         arduino
-        nvs_flash
         ecu
         indicator
         test_button

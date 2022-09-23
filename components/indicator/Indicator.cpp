@@ -24,13 +24,20 @@ Indicator::Indicator(int pinNum) {
   m_isInitialised = false;
 }
 
-Indicator::~Indicator() = default;
+Indicator::~Indicator() {
+  if (not m_isInitialised) { return; }
 
-void Indicator::init() {
-  if (m_isInitialised) { return; }
+  m_threadEnable = false;
+  if (m_thread.joinable()) { m_thread.join(); }
+}
+
+esp_err_t Indicator::init() {
+  if (m_isInitialised) { return ESP_OK; }
   m_isInitialised = true;
 
   pinMode(m_pinNum, OUTPUT);
+
+  return ESP_OK;
 }
 
 void Indicator::enable() {

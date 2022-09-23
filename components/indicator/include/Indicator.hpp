@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include <esp_err.h>
 #include <thread>
 
 /**
@@ -33,7 +34,7 @@ class Indicator {
   /**
    * @brief
    */
-  void init();
+  esp_err_t init();
 
  public:
   /**

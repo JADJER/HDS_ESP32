@@ -16,32 +16,42 @@
 // Created by jadjer on 23.09.22.
 //
 
+#include "Button.hpp"
 #include "ECU.hpp"
 #include "Indicator.hpp"
 #include "Protocol.hpp"
 #include <Arduino.h>
 
+#define TAG "HDS"
+
 Indicator indicator;
 Protocol protocol;
 ECU ecu(&protocol);
+Button button;
 
-void setup() {
+extern "C" void app_main() {
   esp_err_t err;
 
-  indicator.init();
+  ESP_LOGI(TAG, "Initializing...");
+
+  err = indicator.init();
+  if (err) {
+    ESP_LOGE(TAG, "Indicator init failed (err %d)", err);
+    return;
+  }
 
   indicator.blink(100);
 
   err = ecu.connect();
   if (err) {
-    //    ESP_LOGE(TAG, "Connect failed to Honda ECU (err %d)", err);
+    ESP_LOGE(TAG, "Connect failed to Honda ECU (err %d)", err);
 
-    //    if (err == ESP_ERR_INVALID_RESPONSE) { indicatorBlinkErrorCode(1); }
-    //    if (err == ESP_ERR_INVALID_SIZE) { indicatorBlinkErrorCode(2); }
-    //    if (err == ESP_ERR_INVALID_ARG) { indicatorBlinkErrorCode(3); }
-    //    if (err == ESP_ERR_INVALID_CRC) { indicatorBlinkErrorCode(4); }
-    //
-    //    return;
+    if (err == ESP_ERR_INVALID_RESPONSE) { indicator.blinkErrorCode(1); }
+    if (err == ESP_ERR_INVALID_SIZE) { indicator.blinkErrorCode(2); }
+    if (err == ESP_ERR_INVALID_ARG) { indicator.blinkErrorCode(3); }
+    if (err == ESP_ERR_INVALID_CRC) { indicator.blinkErrorCode(4); }
+
+    return;
   }
 
   indicator.blink(500);
@@ -49,7 +59,19 @@ void setup() {
   ecu.detectActiveTables();
 
   indicator.enable();
-}
 
-void loop() {
+  err = button.init();
+  if (err) {
+    ESP_LOGE(TAG, "Test button init failed (err %d)", err);
+    indicator.blinkErrorCode(7);
+  }
+
+  while (true) {
+    if (button.isPressed()) {
+      indicator.blink(500);
+      ecu.detectAllTables();
+      indicator.enable();
+      button.resetState();
+    }
+  }
 }
