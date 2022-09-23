@@ -4,34 +4,17 @@
 
 #include "mesh.h"
 #include "bluetooth.h"
+#include "sensors.h"
 #include <esp_ble_mesh_common_api.h>
 #include <esp_ble_mesh_config_model_api.h>
 #include <esp_ble_mesh_networking_api.h>
 #include <esp_ble_mesh_provisioning_api.h>
-#include <esp_ble_mesh_sensor_model_api.h>
+#include <esp_ble_mesh_generic_model_api.h>
 #include <string.h>
 
 #define TAG "Bluetooth Mesh"
 
 #define CID_ESP 0x02E5
-
-/* Sensor Property ID */
-#define SENSOR_PROPERTY_ID_0 0x0056 /* Present Indoor Ambient Temperature */
-#define SENSOR_PROPERTY_ID_1 0x005B /* Present Outdoor Ambient Temperature */
-
-/* The characteristic of the two device properties is "Temperature 8", which is
- * used to represent a measure of temperature with a unit of 0.5 degree Celsius.
- * Minimum value: -64.0, maximum value: 63.5.
- * A value of 0xFF represents 'value is not known'.
- */
-static int8_t indoorTemp = 40;  /* Indoor temperature is 20 Degrees Celsius */
-static int8_t outdoorTemp = 60; /* Outdoor temperature is 30 Degrees Celsius */
-
-#define SENSOR_POSITIVE_TOLERANCE ESP_BLE_MESH_SENSOR_UNSPECIFIED_POS_TOLERANCE
-#define SENSOR_NEGATIVE_TOLERANCE ESP_BLE_MESH_SENSOR_UNSPECIFIED_NEG_TOLERANCE
-#define SENSOR_SAMPLE_FUNCTION ESP_BLE_MESH_SAMPLE_FUNC_UNSPECIFIED
-#define SENSOR_MEASURE_PERIOD ESP_BLE_MESH_SENSOR_NOT_APPL_MEASURE_PERIOD
-#define SENSOR_UPDATE_INTERVAL ESP_BLE_MESH_SENSOR_NOT_APPL_UPDATE_INTERVAL
 
 static uint8_t devUuid[ESP_BLE_MESH_OCTET16_LEN] = {0x32, 0x10};
 
@@ -41,80 +24,39 @@ static esp_ble_mesh_cfg_srv_t configServer = {
     .friend_state = ESP_BLE_MESH_FRIEND_ENABLED,
     .gatt_proxy = ESP_BLE_MESH_GATT_PROXY_ENABLED,
     .default_ttl = 7,
-    /* 3 transmissions with 20ms interval */
     .net_transmit = ESP_BLE_MESH_TRANSMIT(2, 20),
     .relay_retransmit = ESP_BLE_MESH_TRANSMIT(2, 20),
 };
 
-NET_BUF_SIMPLE_DEFINE_STATIC(sensorData0, 1);
-NET_BUF_SIMPLE_DEFINE_STATIC(sensorData1, 1);
-
-static esp_ble_mesh_sensor_state_t sensorStates[2] = {
-    /* Mesh Model Spec:
-     * Multiple instances of the Sensor states may be present within the same model,
-     * provided that each instance has a unique value of the Sensor Property ID to
-     * allow the instances to be differentiated. Such sensors are known as multisensors.
-     * In this example, two instances of the Sensor states within the same model are
-     * provided.
-     */
-    [0] = {
-        /* Mesh Model Spec:
-         * Sensor Property ID is a 2-octet value referencing a device property
-         * that describes the meaning and format of data reported by a sensor.
-         * 0x0000 is prohibited.
-         */
-        .sensor_property_id = SENSOR_PROPERTY_ID_0,
-        /* Mesh Model Spec:
-         * Sensor Descriptor state represents the attributes describing the sensor
-         * data. This state does not change throughout the lifetime of an element.
-         */
-        .descriptor.positive_tolerance = SENSOR_POSITIVE_TOLERANCE,
-        .descriptor.negative_tolerance = SENSOR_NEGATIVE_TOLERANCE,
-        .descriptor.sampling_function = SENSOR_SAMPLE_FUNCTION,
-        .descriptor.measure_period = SENSOR_MEASURE_PERIOD,
-        .descriptor.update_interval = SENSOR_UPDATE_INTERVAL,
-        .sensor_data.format = ESP_BLE_MESH_SENSOR_DATA_FORMAT_A,
-        .sensor_data.length = 0, /* 0 represents the length is 1 */
-        .sensor_data.raw_value = &sensorData0,
-    },
-    [1] = {
-        .sensor_property_id = SENSOR_PROPERTY_ID_1,
-        .descriptor.positive_tolerance = SENSOR_POSITIVE_TOLERANCE,
-        .descriptor.negative_tolerance = SENSOR_NEGATIVE_TOLERANCE,
-        .descriptor.sampling_function = SENSOR_SAMPLE_FUNCTION,
-        .descriptor.measure_period = SENSOR_MEASURE_PERIOD,
-        .descriptor.update_interval = SENSOR_UPDATE_INTERVAL,
-        .sensor_data.format = ESP_BLE_MESH_SENSOR_DATA_FORMAT_A,
-        .sensor_data.length = 0, /* 0 represents the length is 1 */
-        .sensor_data.raw_value = &sensorData1,
-    },
+ESP_BLE_MESH_MODEL_PUB_DEFINE(onoff_pub_0, 2 + 3, ROLE_NODE);
+static esp_ble_mesh_gen_onoff_srv_t onoff_server_0 = {
+    .rsp_ctrl.get_auto_rsp = ESP_BLE_MESH_SERVER_AUTO_RSP,
+    .rsp_ctrl.set_auto_rsp = ESP_BLE_MESH_SERVER_AUTO_RSP,
 };
 
-/* 20 octets is large enough to hold two Sensor Descriptor state values. */
-ESP_BLE_MESH_MODEL_PUB_DEFINE(sensorPub, 20, ROLE_NODE);
-static esp_ble_mesh_sensor_srv_t sensorServer = {
-    .rsp_ctrl.get_auto_rsp = ESP_BLE_MESH_SERVER_RSP_BY_APP,
-    .rsp_ctrl.set_auto_rsp = ESP_BLE_MESH_SERVER_RSP_BY_APP,
-    .state_count = ARRAY_SIZE(sensorStates),
-    .states = sensorStates,
+ESP_BLE_MESH_MODEL_PUB_DEFINE(battery_pub_0, 2 + 3, ROLE_NODE);
+static esp_ble_mesh_gen_battery_srv_t battery_server_0 = {
+    .rsp_ctrl.get_auto_rsp = ESP_BLE_MESH_SERVER_AUTO_RSP,
+    .rsp_ctrl.set_auto_rsp = ESP_BLE_MESH_SERVER_AUTO_RSP,
 };
 
-ESP_BLE_MESH_MODEL_PUB_DEFINE(sensorSetupPub, 20, ROLE_NODE);
-static esp_ble_mesh_sensor_setup_srv_t sensorSetupServer = {
-    .rsp_ctrl.get_auto_rsp = ESP_BLE_MESH_SERVER_RSP_BY_APP,
-    .rsp_ctrl.set_auto_rsp = ESP_BLE_MESH_SERVER_RSP_BY_APP,
-    .state_count = ARRAY_SIZE(sensorStates),
-    .states = sensorStates,
+ESP_BLE_MESH_MODEL_PUB_DEFINE(rpm_pub_0, 2 + 3, ROLE_NODE);
+static esp_ble_mesh_gen_level_srv_t rpm_server_0 = {
+    .rsp_ctrl.get_auto_rsp = ESP_BLE_MESH_SERVER_AUTO_RSP,
+    .rsp_ctrl.set_auto_rsp = ESP_BLE_MESH_SERVER_AUTO_RSP,
 };
 
-static esp_ble_mesh_model_t root_models[] = {
+static esp_ble_mesh_model_t rootModels[] = {
     ESP_BLE_MESH_MODEL_CFG_SRV(&configServer),
-    ESP_BLE_MESH_MODEL_SENSOR_SRV(&sensorPub, &sensorServer),
-    ESP_BLE_MESH_MODEL_SENSOR_SETUP_SRV(&sensorSetupPub, &sensorSetupServer),
+    ESP_BLE_MESH_MODEL_GEN_ONOFF_SRV(&onoff_pub_0, &onoff_server_0),
+    ESP_BLE_MESH_MODEL_GEN_BATTERY_SRV(&battery_pub_0, &battery_server_0),
+    ESP_BLE_MESH_MODEL_GEN_LEVEL_SRV(&rpm_pub_0, &rpm_server_0)
 };
 
 static esp_ble_mesh_elem_t elements[] = {
-    ESP_BLE_MESH_ELEMENT(0, root_models, ESP_BLE_MESH_MODEL_NONE),
+    ESP_BLE_MESH_ELEMENT(0, rootModels, ESP_BLE_MESH_MODEL_NONE),
+//    ESP_BLE_MESH_ELEMENT(0, extend_model_0, ESP_BLE_MESH_MODEL_NONE),
+//    ESP_BLE_MESH_ELEMENT(0, extend_model_1, ESP_BLE_MESH_MODEL_NONE),
 };
 
 static esp_ble_mesh_comp_t composition = {
@@ -132,9 +74,20 @@ void provisionComplete(uint16_t net_idx, uint16_t addr, uint8_t flags, uint32_t 
   ESP_LOGI(TAG, "flags 0x%02x, iv_index 0x%08x", flags, iv_index);
   //  board_led_operation(LED_G, LED_OFF);
 
-  /* Initialize the indoor and outdoor temperatures for each sensor.  */
-  net_buf_simple_add_u8(&sensorData0, indoorTemp);
-  net_buf_simple_add_u8(&sensorData1, outdoorTemp);
+  VehicleData_t vehicleData;
+  vehicleData.speed = 123;
+
+  sensorsUpdateVehicleData(&vehicleData);
+
+  EngineData_t engineData;
+  engineData.rpm = 4521;
+
+  sensorsUpdateEngineData(&engineData);
+
+  SensorsData_t sensorsData;
+  sensorsData.tpsPercent = 38;
+
+  sensorsUpdateSensorsData(&sensorsData);
 }
 
 void bluetoothMeshProvisioningCallback(esp_ble_mesh_prov_cb_event_t event, esp_ble_mesh_prov_cb_param_t* param) {
@@ -203,350 +156,39 @@ void bluetoothMeshConfigServerCallback(esp_ble_mesh_cfg_server_cb_event_t event,
   }
 }
 
-struct sensorDescriptor {
-  uint16_t sensor_prop_id;
-  uint32_t pos_tolerance : 12;
-  uint32_t neg_tolerance : 12;
-  uint32_t sample_func : 8;
-  uint8_t measure_period;
-  uint8_t update_interval;
-} __attribute__((packed));
-
-void bluetoothMeshSendSensorDescriptorStatus(esp_ble_mesh_sensor_server_cb_param_t* param) {
-  struct sensorDescriptor descriptor = {0};
-  uint8_t* status = NULL;
-  uint16_t length = 0;
-  esp_err_t err;
-  int i;
-
-  status = calloc(1, ARRAY_SIZE(sensorStates) * ESP_BLE_MESH_SENSOR_DESCRIPTOR_LEN);
-  if (!status) {
-    ESP_LOGE(TAG, "No memory for sensor descriptor status!");
-    return;
-  }
-
-  if (param->value.get.sensor_descriptor.op_en == false) {
-    /* Mesh Model Spec:
-         * Upon receiving a Sensor Descriptor Get message with the Property ID field
-         * omitted, the Sensor Server shall respond with a Sensor Descriptor Status
-         * message containing the Sensor Descriptor states for all sensors within the
-         * Sensor Server.
-         */
-    for (i = 0; i < ARRAY_SIZE(sensorStates); i++) {
-      descriptor.sensor_prop_id = sensorStates[i].sensor_property_id;
-      descriptor.pos_tolerance = sensorStates[i].descriptor.positive_tolerance;
-      descriptor.neg_tolerance = sensorStates[i].descriptor.negative_tolerance;
-      descriptor.sample_func = sensorStates[i].descriptor.sampling_function;
-      descriptor.measure_period = sensorStates[i].descriptor.measure_period;
-      descriptor.update_interval = sensorStates[i].descriptor.update_interval;
-      memcpy(status + length, &descriptor, ESP_BLE_MESH_SENSOR_DESCRIPTOR_LEN);
-      length += ESP_BLE_MESH_SENSOR_DESCRIPTOR_LEN;
-    }
-    goto send;
-  }
-
-  for (i = 0; i < ARRAY_SIZE(sensorStates); i++) {
-    if (param->value.get.sensor_descriptor.property_id == sensorStates[i].sensor_property_id) {
-      descriptor.sensor_prop_id = sensorStates[i].sensor_property_id;
-      descriptor.pos_tolerance = sensorStates[i].descriptor.positive_tolerance;
-      descriptor.neg_tolerance = sensorStates[i].descriptor.negative_tolerance;
-      descriptor.sample_func = sensorStates[i].descriptor.sampling_function;
-      descriptor.measure_period = sensorStates[i].descriptor.measure_period;
-      descriptor.update_interval = sensorStates[i].descriptor.update_interval;
-      memcpy(status, &descriptor, ESP_BLE_MESH_SENSOR_DESCRIPTOR_LEN);
-      length = ESP_BLE_MESH_SENSOR_DESCRIPTOR_LEN;
-      goto send;
-    }
-  }
-
-  /* Mesh Model Spec:
-     * When a Sensor Descriptor Get message that identifies a sensor descriptor
-     * property that does not exist on the element, the Descriptor field shall
-     * contain the requested Property ID value and the other fields of the Sensor
-     * Descriptor state shall be omitted.
-     */
-  memcpy(status, &param->value.get.sensor_descriptor.property_id, ESP_BLE_MESH_SENSOR_PROPERTY_ID_LEN);
-  length = ESP_BLE_MESH_SENSOR_PROPERTY_ID_LEN;
-
-send:
-  ESP_LOG_BUFFER_HEX("Sensor Descriptor", status, length);
-
-  err = esp_ble_mesh_server_model_send_msg(param->model, &param->ctx,
-                                           ESP_BLE_MESH_MODEL_OP_SENSOR_DESCRIPTOR_STATUS, length, status);
-  if (err != ESP_OK) {
-    ESP_LOGE(TAG, "Failed to send Sensor Descriptor Status");
-  }
-  free(status);
-}
-
-void bluetoothMeshSendSensorCadenceStatus(esp_ble_mesh_sensor_server_cb_param_t* param) {
-  esp_err_t err;
-
-  /* Sensor Cadence state is not supported currently. */
-  err = esp_ble_mesh_server_model_send_msg(param->model, &param->ctx,
-                                           ESP_BLE_MESH_MODEL_OP_SENSOR_CADENCE_STATUS,
-                                           ESP_BLE_MESH_SENSOR_PROPERTY_ID_LEN,
-                                           (uint8_t*) &param->value.get.sensor_cadence.property_id);
-  if (err != ESP_OK) {
-    ESP_LOGE(TAG, "Failed to send Sensor Cadence Status");
-  }
-}
-
-void bluetoothMeshSendSensorSettingsStatus(esp_ble_mesh_sensor_server_cb_param_t* param) {
-  esp_err_t err;
-
-  /* Sensor Setting state is not supported currently. */
-  err = esp_ble_mesh_server_model_send_msg(param->model, &param->ctx,
-                                           ESP_BLE_MESH_MODEL_OP_SENSOR_SETTINGS_STATUS,
-                                           ESP_BLE_MESH_SENSOR_PROPERTY_ID_LEN,
-                                           (uint8_t*) &param->value.get.sensor_settings.property_id);
-  if (err != ESP_OK) {
-    ESP_LOGE(TAG, "Failed to send Sensor Settings Status");
-  }
-}
-
-struct sensorSetting {
-  uint16_t sensor_prop_id;
-  uint16_t sensor_setting_prop_id;
-} __attribute__((packed));
-
-void bluetoothMeshSendSensorSettingStatus(esp_ble_mesh_sensor_server_cb_param_t* param) {
-  struct sensorSetting setting = {0};
-  esp_err_t err;
-
-  /* Mesh Model Spec:
-     * If the message is sent as a response to the Sensor Setting Get message or
-     * a Sensor Setting Set message with an unknown Sensor Property ID field or
-     * an unknown Sensor Setting Property ID field, the Sensor Setting Access
-     * field and the Sensor Setting Raw field shall be omitted.
-     */
-
-  setting.sensor_prop_id = param->value.get.sensor_setting.property_id;
-  setting.sensor_setting_prop_id = param->value.get.sensor_setting.setting_property_id;
-
-  err = esp_ble_mesh_server_model_send_msg(param->model, &param->ctx,
-                                           ESP_BLE_MESH_MODEL_OP_SENSOR_SETTING_STATUS,
-                                           sizeof(setting), (uint8_t*) &setting);
-  if (err != ESP_OK) {
-    ESP_LOGE(TAG, "Failed to send Sensor Setting Status");
-  }
-}
-
-uint16_t bluetoothMeshGetSensorData(esp_ble_mesh_sensor_state_t* state, uint8_t* data) {
-  uint8_t mpid_len = 0;
-  uint8_t data_len = 0;
-  uint32_t mpid = 0;
-
-  if (state == NULL || data == NULL) {
-    ESP_LOGE(TAG, "%s, Invalid parameter", __func__);
-    return 0;
-  }
-
-  if (state->sensor_data.length == ESP_BLE_MESH_SENSOR_DATA_ZERO_LEN) {
-    /* For zero-length sensor data, the length is 0x7F, and the format is Format B. */
-    mpid = ESP_BLE_MESH_SENSOR_DATA_FORMAT_B_MPID(state->sensor_data.length, state->sensor_property_id);
-    mpid_len = ESP_BLE_MESH_SENSOR_DATA_FORMAT_B_MPID_LEN;
-    data_len = 0;
-  } else {
-    if (state->sensor_data.format == ESP_BLE_MESH_SENSOR_DATA_FORMAT_A) {
-      mpid = ESP_BLE_MESH_SENSOR_DATA_FORMAT_A_MPID(state->sensor_data.length, state->sensor_property_id);
-      mpid_len = ESP_BLE_MESH_SENSOR_DATA_FORMAT_A_MPID_LEN;
-    } else {
-      mpid = ESP_BLE_MESH_SENSOR_DATA_FORMAT_B_MPID(state->sensor_data.length, state->sensor_property_id);
-      mpid_len = ESP_BLE_MESH_SENSOR_DATA_FORMAT_B_MPID_LEN;
-    }
-    /* Use "state->sensor_data.length + 1" because the length of sensor data is zero-based. */
-    data_len = state->sensor_data.length + 1;
-  }
-
-  memcpy(data, &mpid, mpid_len);
-  memcpy(data + mpid_len, state->sensor_data.raw_value->data, data_len);
-
-  return (mpid_len + data_len);
-}
-
-void bluetoothMeshSendSensorStatus(esp_ble_mesh_sensor_server_cb_param_t* param) {
-  uint8_t* status = NULL;
-  uint16_t buf_size = 0;
-  uint16_t length = 0;
-  uint32_t mpid = 0;
-  esp_err_t err;
-  int i;
-
-  /**
-     * Sensor Data state from Mesh Model Spec
-     * |--------Field--------|-Size (octets)-|------------------------Notes-------------------------|
-     * |----Property ID 1----|-------2-------|--ID of the 1st device property of the sensor---------|
-     * |-----Raw Value 1-----|----variable---|--Raw Value field defined by the 1st device property--|
-     * |----Property ID 2----|-------2-------|--ID of the 2nd device property of the sensor---------|
-     * |-----Raw Value 2-----|----variable---|--Raw Value field defined by the 2nd device property--|
-     * | ...... |
-     * |----Property ID n----|-------2-------|--ID of the nth device property of the sensor---------|
-     * |-----Raw Value n-----|----variable---|--Raw Value field defined by the nth device property--|
-     */
-  for (i = 0; i < ARRAY_SIZE(sensorStates); i++) {
-    esp_ble_mesh_sensor_state_t* state = &sensorStates[i];
-    if (state->sensor_data.length == ESP_BLE_MESH_SENSOR_DATA_ZERO_LEN) {
-      buf_size += ESP_BLE_MESH_SENSOR_DATA_FORMAT_B_MPID_LEN;
-    } else {
-      /* Use "state->sensor_data.length + 1" because the length of sensor data is zero-based. */
-      if (state->sensor_data.format == ESP_BLE_MESH_SENSOR_DATA_FORMAT_A) {
-        buf_size += ESP_BLE_MESH_SENSOR_DATA_FORMAT_A_MPID_LEN + state->sensor_data.length + 1;
-      } else {
-        buf_size += ESP_BLE_MESH_SENSOR_DATA_FORMAT_B_MPID_LEN + state->sensor_data.length + 1;
-      }
-    }
-  }
-
-  status = calloc(1, buf_size);
-  if (!status) {
-    ESP_LOGE(TAG, "No memory for sensor status!");
-    return;
-  }
-
-  if (param->value.get.sensor_data.op_en == false) {
-    /* Mesh Model Spec:
-         * If the message is sent as a response to the Sensor Get message, and if the
-         * Property ID field of the incoming message is omitted, the Marshalled Sensor
-         * Data field shall contain data for all device properties within a sensor.
-         */
-    for (i = 0; i < ARRAY_SIZE(sensorStates); i++) {
-      length += bluetoothMeshGetSensorData(&sensorStates[i], status + length);
-    }
-    goto send;
-  }
-
-  /* Mesh Model Spec:
-     * Otherwise, the Marshalled Sensor Data field shall contain data for the requested
-     * device property only.
-     */
-  for (i = 0; i < ARRAY_SIZE(sensorStates); i++) {
-    if (param->value.get.sensor_data.property_id == sensorStates[i].sensor_property_id) {
-      length = bluetoothMeshGetSensorData(&sensorStates[i], status);
-      goto send;
-    }
-  }
-
-  /* Mesh Model Spec:
-     * Or the Length shall represent the value of zero and the Raw Value field shall
-     * contain only the Property ID if the requested device property is not recognized
-     * by the Sensor Server.
-     */
-  mpid = ESP_BLE_MESH_SENSOR_DATA_FORMAT_B_MPID(ESP_BLE_MESH_SENSOR_DATA_ZERO_LEN, param->value.get.sensor_data.property_id);
-  memcpy(status, &mpid, ESP_BLE_MESH_SENSOR_DATA_FORMAT_B_MPID_LEN);
-  length = ESP_BLE_MESH_SENSOR_DATA_FORMAT_B_MPID_LEN;
-
-send:
-  ESP_LOG_BUFFER_HEX("Sensor Data", status, length);
-
-  err = esp_ble_mesh_server_model_send_msg(param->model, &param->ctx, ESP_BLE_MESH_MODEL_OP_SENSOR_STATUS, length, status);
-  if (err != ESP_OK) {
-    ESP_LOGE(TAG, "Failed to send Sensor Status");
-  }
-
-  free(status);
-}
-
-void bluetoothMeshSendSensorColumnStatus(esp_ble_mesh_sensor_server_cb_param_t* param) {
-  uint8_t* status = NULL;
-  uint16_t length = 0;
-  esp_err_t err;
-
-  length = ESP_BLE_MESH_SENSOR_PROPERTY_ID_LEN + param->value.get.sensor_column.raw_value_x->len;
-
-  status = calloc(1, length);
-  if (!status) {
-    ESP_LOGE(TAG, "No memory for sensor column status!");
-    return;
-  }
-
-  memcpy(status, &param->value.get.sensor_column.property_id, ESP_BLE_MESH_SENSOR_PROPERTY_ID_LEN);
-  memcpy(status + ESP_BLE_MESH_SENSOR_PROPERTY_ID_LEN, param->value.get.sensor_column.raw_value_x->data,
-         param->value.get.sensor_column.raw_value_x->len);
-
-  err = esp_ble_mesh_server_model_send_msg(param->model, &param->ctx,
-                                           ESP_BLE_MESH_MODEL_OP_SENSOR_COLUMN_STATUS, length, status);
-  if (err != ESP_OK) {
-    ESP_LOGE(TAG, "Failed to send Sensor Column Status");
-  }
-  free(status);
-}
-
-void bluetoothMeshSendSensorSeriesStatus(esp_ble_mesh_sensor_server_cb_param_t* param) {
-  esp_err_t err;
-
-  err = esp_ble_mesh_server_model_send_msg(param->model, &param->ctx,
-                                           ESP_BLE_MESH_MODEL_OP_SENSOR_SERIES_STATUS,
-                                           ESP_BLE_MESH_SENSOR_PROPERTY_ID_LEN,
-                                           (uint8_t*) &param->value.get.sensor_series.property_id);
-  if (err != ESP_OK) {
-    ESP_LOGE(TAG, "Failed to send Sensor Column Status");
-  }
-}
-
-void bluetoothMeshSensorServerCallback(esp_ble_mesh_sensor_server_cb_event_t event, esp_ble_mesh_sensor_server_cb_param_t* param) {
-  ESP_LOGI(TAG, "Sensor server, event %d, src 0x%04x, dst 0x%04x, model_id 0x%04x",
-           event, param->ctx.addr, param->ctx.recv_dst, param->model->model_id);
+void bluetoothMeshGenericServeCallback(esp_ble_mesh_generic_server_cb_event_t event, esp_ble_mesh_generic_server_cb_param_t* param) {
+  esp_ble_mesh_gen_onoff_srv_t* srv;
+  ESP_LOGI(TAG, "event 0x%02x, opcode 0x%04x, src 0x%04x, dst 0x%04x", event, param->ctx.recv_op, param->ctx.addr, param->ctx.recv_dst);
 
   switch (event) {
-    case ESP_BLE_MESH_SENSOR_SERVER_RECV_GET_MSG_EVT:
-      switch (param->ctx.recv_op) {
-        case ESP_BLE_MESH_MODEL_OP_SENSOR_DESCRIPTOR_GET:
-          ESP_LOGI(TAG, "ESP_BLE_MESH_MODEL_OP_SENSOR_DESCRIPTOR_GET");
-          bluetoothMeshSendSensorDescriptorStatus(param);
-          break;
-        case ESP_BLE_MESH_MODEL_OP_SENSOR_CADENCE_GET:
-          ESP_LOGI(TAG, "ESP_BLE_MESH_MODEL_OP_SENSOR_CADENCE_GET");
-          bluetoothMeshSendSensorCadenceStatus(param);
-          break;
-        case ESP_BLE_MESH_MODEL_OP_SENSOR_SETTINGS_GET:
-          ESP_LOGI(TAG, "ESP_BLE_MESH_MODEL_OP_SENSOR_SETTINGS_GET");
-          bluetoothMeshSendSensorSettingsStatus(param);
-          break;
-        case ESP_BLE_MESH_MODEL_OP_SENSOR_SETTING_GET:
-          ESP_LOGI(TAG, "ESP_BLE_MESH_MODEL_OP_SENSOR_SETTINGS_GET");
-          bluetoothMeshSendSensorSettingStatus(param);
-          break;
-        case ESP_BLE_MESH_MODEL_OP_SENSOR_GET:
-          ESP_LOGI(TAG, "ESP_BLE_MESH_MODEL_OP_SENSOR_GET");
-          bluetoothMeshSendSensorStatus(param);
-          break;
-        case ESP_BLE_MESH_MODEL_OP_SENSOR_COLUMN_GET:
-          ESP_LOGI(TAG, "ESP_BLE_MESH_MODEL_OP_SENSOR_COLUMN_GET");
-          bluetoothMeshSendSensorColumnStatus(param);
-          break;
-        case ESP_BLE_MESH_MODEL_OP_SENSOR_SERIES_GET:
-          ESP_LOGI(TAG, "ESP_BLE_MESH_MODEL_OP_SENSOR_SERIES_GET");
-          bluetoothMeshSendSensorSeriesStatus(param);
-          break;
-        default:
-          ESP_LOGE(TAG, "Unknown Sensor Get opcode 0x%04x", param->ctx.recv_op);
-          return;
+    case ESP_BLE_MESH_GENERIC_SERVER_STATE_CHANGE_EVT:
+      ESP_LOGI(TAG, "ESP_BLE_MESH_GENERIC_SERVER_STATE_CHANGE_EVT");
+      if (param->ctx.recv_op == ESP_BLE_MESH_MODEL_OP_GEN_ONOFF_SET || param->ctx.recv_op == ESP_BLE_MESH_MODEL_OP_GEN_ONOFF_SET_UNACK) {
+        ESP_LOGI(TAG, "onoff 0x%02x", param->value.state_change.onoff_set.onoff);
+        //        example_change_led_state(param->model, &param->ctx, param->value.state_change.onoff_set.onoff);
       }
       break;
-    case ESP_BLE_MESH_SENSOR_SERVER_RECV_SET_MSG_EVT:
-      switch (param->ctx.recv_op) {
-        case ESP_BLE_MESH_MODEL_OP_SENSOR_CADENCE_SET:
-          ESP_LOGI(TAG, "ESP_BLE_MESH_MODEL_OP_SENSOR_CADENCE_SET");
-          bluetoothMeshSendSensorCadenceStatus(param);
-          break;
-        case ESP_BLE_MESH_MODEL_OP_SENSOR_CADENCE_SET_UNACK:
-          ESP_LOGI(TAG, "ESP_BLE_MESH_MODEL_OP_SENSOR_CADENCE_SET_UNACK");
-          break;
-        case ESP_BLE_MESH_MODEL_OP_SENSOR_SETTING_SET:
-          ESP_LOGI(TAG, "ESP_BLE_MESH_MODEL_OP_SENSOR_SETTING_SET");
-          bluetoothMeshSendSensorSettingStatus(param);
-          break;
-        case ESP_BLE_MESH_MODEL_OP_SENSOR_SETTING_SET_UNACK:
-          ESP_LOGI(TAG, "ESP_BLE_MESH_MODEL_OP_SENSOR_SETTING_SET_UNACK");
-          break;
-        default:
-          ESP_LOGE(TAG, "Unknown Sensor Set opcode 0x%04x", param->ctx.recv_op);
-          break;
+    case ESP_BLE_MESH_GENERIC_SERVER_RECV_GET_MSG_EVT:
+      ESP_LOGI(TAG, "ESP_BLE_MESH_GENERIC_SERVER_RECV_GET_MSG_EVT");
+      if (param->ctx.recv_op == ESP_BLE_MESH_MODEL_OP_GEN_ONOFF_GET) {
+        srv = param->model->user_data;
+        ESP_LOGI(TAG, "onoff 0x%02x", srv->state.onoff);
+        //        example_handle_gen_onoff_msg(param->model, &param->ctx, NULL);
+      }
+      break;
+    case ESP_BLE_MESH_GENERIC_SERVER_RECV_SET_MSG_EVT:
+      ESP_LOGI(TAG, "ESP_BLE_MESH_GENERIC_SERVER_RECV_SET_MSG_EVT");
+      if (param->ctx.recv_op == ESP_BLE_MESH_MODEL_OP_GEN_ONOFF_SET || param->ctx.recv_op == ESP_BLE_MESH_MODEL_OP_GEN_ONOFF_SET_UNACK) {
+        ESP_LOGI(TAG, "onoff 0x%02x, tid 0x%02x", param->value.set.onoff.onoff, param->value.set.onoff.tid);
+        if (param->value.set.onoff.op_en) {
+          ESP_LOGI(TAG, "trans_time 0x%02x, delay 0x%02x",
+                   param->value.set.onoff.trans_time, param->value.set.onoff.delay);
+        }
+        //        example_handle_gen_onoff_msg(param->model, &param->ctx, &param->value.set.onoff);
       }
       break;
     default:
-      ESP_LOGE(TAG, "Unknown Sensor Server event %d", event);
+      ESP_LOGE(TAG, "Unknown Generic Server event 0x%02x", event);
       break;
   }
 }
@@ -558,7 +200,7 @@ esp_err_t bluetoothMeshInit() {
 
   esp_ble_mesh_register_prov_callback(bluetoothMeshProvisioningCallback);
   esp_ble_mesh_register_config_server_callback(bluetoothMeshConfigServerCallback);
-  esp_ble_mesh_register_sensor_server_callback(bluetoothMeshSensorServerCallback);
+  esp_ble_mesh_register_generic_server_callback(bluetoothMeshGenericServeCallback);
 
   err = esp_ble_mesh_init(&provision, &composition);
   if (err != ESP_OK) {
