@@ -5,7 +5,6 @@
 #include "Protocol.hpp"
 #include "utils.hpp"
 #include <esp_log.h>
-#include <memory>
 
 Protocol::Protocol() : Protocol(16, 17) {}
 
@@ -57,8 +56,6 @@ std::optional<CommandResult> Protocol::readData() {
 
   //    Create buffer for read
   uint8_t data[responseLength];
-//  auto data = new uint8_t[responseLength];
-
   data[0] = responseConfirm;
   data[1] = responseLength;
   data[2] = responseCommand;

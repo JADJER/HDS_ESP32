@@ -11,7 +11,7 @@ ECU::ECU(IProtocol* protocol) {
   m_protocol = protocol;
   m_isConnected = false;
 
-  m_vehicleData = {};
+  m_vehicleData = {.id = "undefined", .batteryVolts = 127, .speed = 120, .state = 2};
   m_engineData = {};
   m_sensorsData = {};
   m_errorData = {};
@@ -113,9 +113,9 @@ esp_err_t ECU::updateDataFromTable0() {
   if (response == std::nullopt) { return ESP_FAIL; }
   if (response->len != 0xf) { return ESP_FAIL; }
 
-    for (size_t i = 4; i < response->len - 1; i++) {
-      m_vehicleData.id += std::to_string(static_cast<int>(response->data[i]));
-    }
+  for (size_t i = 4; i < response->len - 1; i++) {
+    m_vehicleData.id += std::to_string(static_cast<int>(response->data[i]));
+  }
 
   return ESP_OK;
 }
@@ -134,10 +134,10 @@ esp_err_t ECU::updateDataFromTable10() {
   m_sensorsData.iatTemp = calcValueMinus40(response->data[11]);
   m_sensorsData.mapVolts = calcValueDivide256(response->data[12]);
   m_sensorsData.mapPressure = response->data[13];
-  m_vehicleData.batteryVolts = calcValueDivide10(response->data[16]);
+  m_vehicleData.batteryVolts = response->data[16];
   m_vehicleData.speed = response->data[17];
   m_engineData.fuelInject = (response->data[18] << 8) + response->data[19];
-  m_engineData.ignitionAdvance = calcValueDivide10(response->data[20]);
+  m_engineData.ignitionAdvance = response->data[20];
 
   return ESP_OK;
 }
@@ -156,10 +156,10 @@ esp_err_t ECU::updateDataFromTable11() {
   m_sensorsData.iatTemp = calcValueMinus40(response->data[11]);
   m_sensorsData.mapVolts = calcValueDivide256(response->data[12]);
   m_sensorsData.mapPressure = response->data[13];
-  m_vehicleData.batteryVolts = calcValueDivide10(response->data[16]);
+  m_vehicleData.batteryVolts = response->data[16];
   m_vehicleData.speed = response->data[17];
   m_engineData.fuelInject = (response->data[18] << 8) + response->data[19];
-  m_engineData.ignitionAdvance = calcValueDivide10(response->data[20]);
+  m_engineData.ignitionAdvance = response->data[20];
 
   m_unknownData.unkData1 = response->data[21];
   m_unknownData.unkData2 = response->data[22];
