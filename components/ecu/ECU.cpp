@@ -2,15 +2,43 @@
 // Created by jadjer on 01.09.22.
 //
 
-#include "ecu.h"
-#include "command_result.h"
-#include "utils.h"
+#include "ECU.hpp"
+#include "CommandResult.hpp"
+#include "Protocol.hpp"
+#include "utils.hpp"
 
-esp_err_t connect() {
-  return m_protocol.connect();
+ECU::ECU(IProtocol* protocol) {
+  m_protocol = protocol;
+  m_isConnected = false;
+
+  m_vehicleData = {};
+  m_engineData = {};
+  m_sensorsData = {};
+  m_errorData = {};
+  m_unknownData = {};
 }
 
-void test() {
+ECU::~ECU() = default;
+
+esp_err_t ECU::connect() {
+  if (m_isConnected) { return ESP_OK; }
+
+  esp_err_t err = m_protocol->connect();
+
+  m_isConnected = err == ESP_OK;
+
+  return err;
+}
+
+bool ECU::isConnected() const {
+  return m_isConnected;
+}
+
+void ECU::detectAllTables() {
+  if (not m_isConnected) { return; }
+
+  std::lock_guard<std::mutex> lock(m_mutex);
+
   uint8_t address = 0x0;
 
   for (size_t i = 0; i <= 255; i++) {
@@ -19,59 +47,82 @@ void test() {
 
     address++;
 
-    m_protocol.writeData(message, 5);
-    m_protocol.readData();
+    m_protocol->writeData(message, 5);
+    m_protocol->readData();
   }
 }
 
-char* get_id() {
-  return m_id;
+void ECU::detectActiveTables() {
+  if (not m_isConnected) { return; }
+
+  std::lock_guard<std::mutex> lock(m_mutex);
+
+  updateDataFromTable0();
+
+  if (updateDataFromTable10()) { m_enableTable10 = true; }
+  if (updateDataFromTable11()) { m_enableTable11 = true; }
+  if (updateDataFromTable20()) { m_enableTable20 = true; }
+  if (updateDataFromTable21()) { m_enableTable21 = true; }
 }
 
-engine_data_t get_engine_data() {
-  return m_engineData;
+void ECU::updateAllData() {
+  if (not m_isConnected) { return; }
+
+  std::lock_guard<std::mutex> lock(m_mutex);
+
+  if (m_enableTable10) { updateDataFromTable10(); }
+  if (m_enableTable11) { updateDataFromTable11(); }
+  if (m_enableTable20) { updateDataFromTable20(); }
+  if (m_enableTable21) { updateDataFromTable21(); }
+
+  updateDataFromTableD0();
+  updateDataFromTableD1();
 }
 
-sensors_data_t get_sensors_data() {
-  return m_sensorsData;
-}
-
-vehicle_data_t get_vehicle_data() {
+VehicleData ECU::getVehicleData() const {
   return m_vehicleData;
 }
 
-error_data_t get_error_data() {
+EngineData ECU::getEngineData() const {
+  return m_engineData;
+}
+
+SensorsData ECU::getSensorsData() const {
+  return m_sensorsData;
+}
+
+ErrorData ECU::getErrorData() const {
   return m_errorData;
 }
 
-unknown_data_t get_unknown_data() {
+UnknownData ECU::getUnknownData() const {
   return m_unknownData;
 }
 
-command_result_t* update_data_from_table(uint8_t table) {
+std::optional<CommandResult> ECU::updateDataFromTable(uint8_t table) {
   uint8_t message[5] = {0x72, 0x05, 0x71, table, 0x00};
   message[4] = calcChecksum(message, 4);
 
-  m_protocol.writeData(message, 5);
+  m_protocol->writeData(message, 5);
 
-  return m_protocol.readData();
+  return m_protocol->readData();
 }
 
-esp_err_t update_data_from_table_0() {
-  command_result_t* response = update_data_from_table(0x0);
-  if (response == NULL) { return ESP_FAIL; }
+esp_err_t ECU::updateDataFromTable0() {
+  auto response = updateDataFromTable(0x0);
+  if (response == std::nullopt) { return ESP_FAIL; }
   if (response->len != 0xf) { return ESP_FAIL; }
 
-  for (size_t i = 4; i < response->len - 1; i++) {
-    m_id += std::to_string(static_cast<int>(response->data[i]));
-  }
+    for (size_t i = 4; i < response->len - 1; i++) {
+      m_vehicleData.id += std::to_string(static_cast<int>(response->data[i]));
+    }
 
   return ESP_OK;
 }
 
-esp_err_t update_data_from_table_10() {
-  command_result_t* response = update_data_from_table(0x10);
-  if (response == NULL) { return ESP_FAIL; }
+esp_err_t ECU::updateDataFromTable10() {
+  auto response = updateDataFromTable(0x10);
+  if (response == std::nullopt) { return ESP_FAIL; }
   if (response->len != 0x16) { return ESP_FAIL; }
 
   m_engineData.rpm = (response->data[4] << 8) + response->data[5];
@@ -86,14 +137,14 @@ esp_err_t update_data_from_table_10() {
   m_vehicleData.batteryVolts = calcValueDivide10(response->data[16]);
   m_vehicleData.speed = response->data[17];
   m_engineData.fuelInject = (response->data[18] << 8) + response->data[19];
-  m_engineData.ignitionAngle = calcValueDivide10(response->data[20]);
+  m_engineData.ignitionAdvance = calcValueDivide10(response->data[20]);
 
   return ESP_OK;
 }
 
-esp_err_t update_data_from_table_11() {
-  command_result_t* response = update_data_from_table(0x11);
-  if (response == NULL) { return ESP_FAIL; }
+esp_err_t ECU::updateDataFromTable11() {
+  auto response = updateDataFromTable(0x11);
+  if (response == std::nullopt) { return ESP_FAIL; }
   if (response->len != 0x19) { return ESP_FAIL; }
 
   m_engineData.rpm = (response->data[4] << 8) + response->data[5];
@@ -108,7 +159,7 @@ esp_err_t update_data_from_table_11() {
   m_vehicleData.batteryVolts = calcValueDivide10(response->data[16]);
   m_vehicleData.speed = response->data[17];
   m_engineData.fuelInject = (response->data[18] << 8) + response->data[19];
-  m_engineData.ignitionAngle = calcValueDivide10(response->data[20]);
+  m_engineData.ignitionAdvance = calcValueDivide10(response->data[20]);
 
   m_unknownData.unkData1 = response->data[21];
   m_unknownData.unkData2 = response->data[22];
@@ -117,9 +168,9 @@ esp_err_t update_data_from_table_11() {
   return ESP_OK;
 }
 
-esp_err_t update_data_from_table_20() {
-  command_result_t* response = update_data_from_table(0x20);
-  if (response == NULL) { return ESP_FAIL; }
+esp_err_t ECU::updateDataFromTable20() {
+  auto response = updateDataFromTable(0x20);
+  if (response == std::nullopt) { return ESP_FAIL; }
   if (response->len != 0x8) { return ESP_FAIL; }
 
   m_unknownData.unkData4 = response->data[4];
@@ -129,9 +180,9 @@ esp_err_t update_data_from_table_20() {
   return ESP_OK;
 }
 
-esp_err_t update_data_from_table_21() {
-  command_result_t* response = update_data_from_table(0x21);
-  if (response == NULL) { return ESP_FAIL; }
+esp_err_t ECU::updateDataFromTable21() {
+  auto response = updateDataFromTable(0x21);
+  if (response == std::nullopt) { return ESP_FAIL; }
   if (response->len != 0xb) { return ESP_FAIL; }
 
   m_unknownData.unkData1 = response->data[4];
@@ -144,9 +195,9 @@ esp_err_t update_data_from_table_21() {
   return ESP_OK;
 }
 
-esp_err_t update_data_from_table_D0() {
-  command_result_t* response = update_data_from_table(0xD0);
-  if (response == NULL) { return ESP_FAIL; }
+esp_err_t ECU::updateDataFromTableD0() {
+  auto response = updateDataFromTable(0xD0);
+  if (response == std::nullopt) { return ESP_FAIL; }
   if (response->len != 0x13) { return ESP_FAIL; }
 
   m_unknownData.unkData7 = response->data[4];
@@ -167,9 +218,9 @@ esp_err_t update_data_from_table_D0() {
   return ESP_OK;
 }
 
-esp_err_t update_data_from_table_D1() {
-  command_result_t* response = update_data_from_table(0xD1);
-  if (response == NULL) { return ESP_FAIL; }
+esp_err_t ECU::updateDataFromTableD1() {
+  auto response = updateDataFromTable(0xD1);
+  if (response == std::nullopt) { return ESP_FAIL; }
   if (response->len != 0xb) { return ESP_FAIL; }
 
   m_vehicleData.state = response->data[4];
@@ -181,23 +232,4 @@ esp_err_t update_data_from_table_D1() {
   m_unknownData.unkData25 = response->data[9];
 
   return ESP_OK;
-}
-
-void spin_once() {
-  if (m_enableTable10) { update_data_from_table_10(); }
-  if (m_enableTable11) { update_data_from_table_11(); }
-  if (m_enableTable20) { update_data_from_table_20(); }
-  if (m_enableTable21) { update_data_from_table_21(); }
-
-  update_data_from_table_D0();
-  update_data_from_table_D1();
-}
-
-void detect_active_tables() {
-  update_data_from_table_0();
-
-  if (update_data_from_table_10()) { m_enableTable10 = true; }
-  if (update_data_from_table_11()) { m_enableTable11 = true; }
-  if (update_data_from_table_20()) { m_enableTable20 = true; }
-  if (update_data_from_table_21()) { m_enableTable21 = true; }
 }

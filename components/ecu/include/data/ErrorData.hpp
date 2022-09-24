@@ -4,6 +4,4 @@
 
 #pragma once
 
-typedef struct {
-
-} error_data_t;
+struct ErrorData {};
