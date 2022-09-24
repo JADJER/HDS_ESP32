@@ -9,23 +9,33 @@
 
 ECU::ECU(IProtocol* protocol) {
   m_protocol = protocol;
+  m_isConnected = false;
+
+  m_vehicleData = {};
+  m_engineData = {};
+  m_sensorsData = {};
+  m_errorData = {};
+  m_unknownData = {};
 }
 
 ECU::~ECU() = default;
 
 esp_err_t ECU::connect() {
-  if (m_isInitialised) { return ESP_OK; }
+  if (m_isConnected) { return ESP_OK; }
 
   esp_err_t err = m_protocol->connect();
-  if (err == ESP_OK) {
-    m_isInitialised = true;
-  }
+
+  m_isConnected = err == ESP_OK;
 
   return err;
 }
 
+bool ECU::isConnected() const {
+  return m_isConnected;
+}
+
 void ECU::detectAllTables() {
-  if (!m_isInitialised) { return; }
+  if (not m_isConnected) { return; }
 
   std::lock_guard<std::mutex> lock(m_mutex);
 
@@ -43,7 +53,7 @@ void ECU::detectAllTables() {
 }
 
 void ECU::detectActiveTables() {
-  if (!m_isInitialised) { return; }
+  if (not m_isConnected) { return; }
 
   std::lock_guard<std::mutex> lock(m_mutex);
 
@@ -56,40 +66,36 @@ void ECU::detectActiveTables() {
 }
 
 void ECU::updateAllData() {
-  if (!m_isInitialised) { return; }
+  if (not m_isConnected) { return; }
 
   std::lock_guard<std::mutex> lock(m_mutex);
 
-  if (m_enableTable10 == 1) { updateDataFromTable10(); }
-  if (m_enableTable11 == 1) { updateDataFromTable11(); }
-  if (m_enableTable20 == 1) { updateDataFromTable20(); }
-  if (m_enableTable21 == 1) { updateDataFromTable21(); }
+  if (m_enableTable10) { updateDataFromTable10(); }
+  if (m_enableTable11) { updateDataFromTable11(); }
+  if (m_enableTable20) { updateDataFromTable20(); }
+  if (m_enableTable21) { updateDataFromTable21(); }
 
   updateDataFromTableD0();
   updateDataFromTableD1();
 }
 
-std::string ECU::getId() const {
-  return m_id;
-}
-
-VehicleData_t ECU::getVehicleData() const {
+VehicleData ECU::getVehicleData() const {
   return m_vehicleData;
 }
 
-EngineData_t ECU::getEngineData() const {
+EngineData ECU::getEngineData() const {
   return m_engineData;
 }
 
-SensorsData_t ECU::getSensorsData() const {
+SensorsData ECU::getSensorsData() const {
   return m_sensorsData;
 }
 
-ErrorData_t ECU::getErrorData() const {
+ErrorData ECU::getErrorData() const {
   return m_errorData;
 }
 
-UnknownData_t ECU::getUnknownData() const {
+UnknownData ECU::getUnknownData() const {
   return m_unknownData;
 }
 
@@ -105,14 +111,11 @@ std::optional<CommandResult> ECU::updateDataFromTable(uint8_t table) {
 esp_err_t ECU::updateDataFromTable0() {
   auto response = updateDataFromTable(0x0);
   if (response == std::nullopt) { return ESP_FAIL; }
-  if (response->len != 0xf) {
-    free(response->data);
-    return ESP_FAIL;
-  }
+  if (response->len != 0xf) { return ESP_FAIL; }
 
-  //  for (size_t i = 4; i < response->len - 1; i++) {
-  //    m_id += std::to_string(static_cast<int>(response->data[i]));
-  //  }
+    for (size_t i = 4; i < response->len - 1; i++) {
+      m_vehicleData.id += std::to_string(static_cast<int>(response->data[i]));
+    }
 
   return ESP_OK;
 }
@@ -120,10 +123,7 @@ esp_err_t ECU::updateDataFromTable0() {
 esp_err_t ECU::updateDataFromTable10() {
   auto response = updateDataFromTable(0x10);
   if (response == std::nullopt) { return ESP_FAIL; }
-  if (response->len != 0x16) {
-    free(response->data);
-    return ESP_FAIL;
-  }
+  if (response->len != 0x16) { return ESP_FAIL; }
 
   m_engineData.rpm = (response->data[4] << 8) + response->data[5];
   m_sensorsData.tpsVolts = calcValueDivide256(response->data[6]);

@@ -21,28 +21,16 @@ Indicator::Indicator() : Indicator(2) {}
 Indicator::Indicator(int pinNum) {
   m_pinNum = pinNum;
   m_threadEnable = false;
-  m_isInitialised = false;
+
+  pinMode(m_pinNum, OUTPUT);
 }
 
 Indicator::~Indicator() {
-  if (not m_isInitialised) { return; }
-
   m_threadEnable = false;
   if (m_thread.joinable()) { m_thread.join(); }
 }
 
-esp_err_t Indicator::init() {
-  if (m_isInitialised) { return ESP_OK; }
-  m_isInitialised = true;
-
-  pinMode(m_pinNum, OUTPUT);
-
-  return ESP_OK;
-}
-
 void Indicator::enable() {
-  if (not m_isInitialised) { return; }
-
   m_threadEnable = false;
   if (m_thread.joinable()) { m_thread.join(); }
 
@@ -50,8 +38,6 @@ void Indicator::enable() {
 }
 
 void Indicator::disable() {
-  if (not m_isInitialised) { return; }
-
   m_threadEnable = false;
   if (m_thread.joinable()) { m_thread.join(); }
 
@@ -59,8 +45,6 @@ void Indicator::disable() {
 }
 
 void Indicator::blink(int delayMs) {
-  if (not m_isInitialised) { return; }
-
   m_threadEnable = false;
   if (m_thread.joinable()) { m_thread.join(); }
 
@@ -69,8 +53,6 @@ void Indicator::blink(int delayMs) {
 }
 
 void Indicator::blinkErrorCode(int errorCode) {
-  if (not m_isInitialised) { return; }
-
   m_threadEnable = false;
   if (m_thread.joinable()) { m_thread.join(); }
 

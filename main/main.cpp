@@ -16,62 +16,12 @@
 // Created by jadjer on 23.09.22.
 //
 
-#include "Button.hpp"
-#include "ECU.hpp"
-#include "Indicator.hpp"
-#include "Protocol.hpp"
+#include "Controller.hpp"
 #include <Arduino.h>
 
-#define TAG "HDS"
-
-Indicator indicator;
-Protocol protocol;
-ECU ecu(&protocol);
-Button button;
-
 extern "C" void app_main() {
-  esp_err_t err;
+  initArduino();
 
-  ESP_LOGI(TAG, "Initializing...");
-
-  err = indicator.init();
-  if (err) {
-    ESP_LOGE(TAG, "Indicator init failed (err %d)", err);
-    return;
-  }
-
-  indicator.blink(100);
-
-  err = ecu.connect();
-  if (err) {
-    ESP_LOGE(TAG, "Connect failed to Honda ECU (err %d)", err);
-
-    if (err == ESP_ERR_INVALID_RESPONSE) { indicator.blinkErrorCode(1); }
-    if (err == ESP_ERR_INVALID_SIZE) { indicator.blinkErrorCode(2); }
-    if (err == ESP_ERR_INVALID_ARG) { indicator.blinkErrorCode(3); }
-    if (err == ESP_ERR_INVALID_CRC) { indicator.blinkErrorCode(4); }
-
-    return;
-  }
-
-  indicator.blink(500);
-
-  ecu.detectActiveTables();
-
-  indicator.enable();
-
-  err = button.init();
-  if (err) {
-    ESP_LOGE(TAG, "Test button init failed (err %d)", err);
-    indicator.blinkErrorCode(7);
-  }
-
-  while (true) {
-    if (button.isPressed()) {
-      indicator.blink(500);
-      ecu.detectAllTables();
-      indicator.enable();
-      button.resetState();
-    }
-  }
+  Controller controller;
+  controller.spin();
 }

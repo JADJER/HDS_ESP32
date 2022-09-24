@@ -4,11 +4,11 @@
 
 #pragma once
 
-typedef struct {
+struct EngineData {
   int rpm;
   int fuelInject;
   float ignitionAdvance;
-  int unk_data_1;
-  int unk_data_2;
-  int unk_data_3;
-} EngineData_t;
+  int unkData1;
+  int unkData2;
+  int unkData3;
+};

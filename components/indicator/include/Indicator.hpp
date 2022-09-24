@@ -34,12 +34,6 @@ class Indicator {
   /**
    * @brief
    */
-  esp_err_t init();
-
- public:
-  /**
-   * @brief
-   */
   void enable();
 
   /**
@@ -63,7 +57,6 @@ class Indicator {
   int m_pinNum;
   std::thread m_thread;
   bool m_threadEnable;
-  bool m_isInitialised;
 
  private:
   void blinkTask(int delayMs) const;

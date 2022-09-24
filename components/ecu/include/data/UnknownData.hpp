@@ -4,7 +4,7 @@
 
 #pragma once
 
-typedef struct {
+struct UnknownData {
   int unkData1;
   int unkData2;
   int unkData3;
@@ -45,4 +45,4 @@ typedef struct {
   int unkData38;
   int unkData39;
   int unkData40;
-} UnknownData_t;
+};

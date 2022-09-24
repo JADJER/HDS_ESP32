@@ -10,6 +10,7 @@
 class Protocol : public IProtocol {
  public:
   Protocol();
+  Protocol(int8_t rxPin, int8_t txPin);
   ~Protocol() override;
 
  public:

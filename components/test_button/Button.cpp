@@ -3,9 +3,6 @@
 //
 
 #include "Button.hpp"
-#include <Arduino.h>
-
-#define TAG "Button"
 
 static bool buttonIsPressed = false;
 
@@ -13,25 +10,17 @@ void ARDUINO_ISR_ATTR isr() {
   buttonIsPressed = true;
 }
 
-Button::Button() {
-  m_button = 0;
-  m_isInitialised = false;
+Button::Button() : Button(0) {}
+
+Button::Button(int8_t buttonPin) {
+  m_buttonPin = buttonPin;
+
+  pinMode(m_buttonPin, INPUT_PULLUP);
+  attachInterrupt(m_buttonPin, isr, FALLING);
 }
 
 Button::~Button() {
-  if (not m_isInitialised) { return; }
-
-  detachInterrupt(m_button);
-}
-
-esp_err_t Button::init() {
-  if (m_isInitialised) { return ESP_OK; }
-  m_isInitialised = true;
-
-  pinMode(m_button, INPUT_PULLUP);
-  attachInterrupt(m_button, isr, FALLING);
-
-  return ESP_OK;
+  detachInterrupt(m_buttonPin);
 }
 
 bool Button::isPressed() {

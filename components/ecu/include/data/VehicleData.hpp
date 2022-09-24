@@ -4,8 +4,11 @@
 
 #pragma once
 
-typedef struct {
+#include <string>
+
+struct VehicleData {
+  std::string id;
   float batteryVolts;
   int speed;
   int state;
-} VehicleData_t;
+};

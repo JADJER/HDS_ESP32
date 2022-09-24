@@ -6,11 +6,11 @@
 
 #include "CommandResult.hpp"
 #include "IProtocol.hpp"
-#include "data/engine_data.h"
-#include "data/error_data.h"
-#include "data/sensors_data.h"
-#include "data/unknown_data.h"
-#include "data/vehicle_data.h"
+#include "data/EngineData.hpp"
+#include "data/ErrorData.hpp"
+#include "data/SensorsData.hpp"
+#include "data/UnknownData.hpp"
+#include "data/VehicleData.hpp"
 #include <esp_err.h>
 #include <memory>
 #include <mutex>
@@ -30,6 +30,13 @@ class ECU {
   esp_err_t connect();
 
   /**
+   * @brief
+   * @return
+   */
+  [[nodiscard]] bool isConnected() const;
+
+ public:
+  /**
  * @brief
  */
   void detectAllTables();
@@ -44,56 +51,54 @@ class ECU {
  */
   void updateAllData();
 
+ public:
   /**
- * @brief
- * @return
- */
-  [[nodiscard]] std::string getId() const;
+   * @brief
+   * @return
+   */
+  [[nodiscard]] VehicleData getVehicleData() const;
 
   /**
- * @brief
- * @return
- */
-  [[nodiscard]] VehicleData_t getVehicleData() const;
+   * @brief
+   * @return
+   */
+  [[nodiscard]] EngineData getEngineData() const;
 
   /**
- * @brief
- * @return
- */
-  [[nodiscard]] EngineData_t getEngineData() const;
+   * @brief
+   * @return
+   */
+  [[nodiscard]] SensorsData getSensorsData() const;
 
   /**
- * @brief
- * @return
- */
-  [[nodiscard]] SensorsData_t getSensorsData() const;
+   * @brief
+   * @return
+   */
+  [[nodiscard]] ErrorData getErrorData() const;
 
   /**
- * @brief
- * @return
- */
-  [[nodiscard]] ErrorData_t getErrorData() const;
-
-  /**
- * @brief
- * @return
- */
-  [[nodiscard]] UnknownData_t getUnknownData() const;
+   * @brief
+   * @return
+   */
+  [[nodiscard]] UnknownData getUnknownData() const;
 
  private:
-  std::string m_id;
-  VehicleData_t m_vehicleData;
-  EngineData_t m_engineData;
-  SensorsData_t m_sensorsData;
-  ErrorData_t m_errorData;
-  UnknownData_t m_unknownData;
+  std::mutex m_mutex;
+  IProtocol* m_protocol;
+
+ private:
+  bool m_isConnected;
   bool m_enableTable10;
   bool m_enableTable11;
   bool m_enableTable20;
   bool m_enableTable21;
-  std::mutex m_mutex;
-  bool m_isInitialised;
-  IProtocol* m_protocol;
+
+ private:
+  VehicleData m_vehicleData;
+  EngineData m_engineData;
+  SensorsData m_sensorsData;
+  ErrorData m_errorData;
+  UnknownData m_unknownData;
 
  private:
   std::optional<CommandResult> updateDataFromTable(uint8_t table);

@@ -7,18 +7,16 @@
 #include <esp_log.h>
 #include <memory>
 
-#define TAG "Protocol"
+Protocol::Protocol() : Protocol(16, 17) {}
 
-Protocol::Protocol() : m_serial(2) {
-  m_uartRx = 16;
-  m_uartTx = 17;
+Protocol::Protocol(int8_t rxPin, int8_t txPin) : m_serial(2) {
+  m_uartRx = rxPin;
+  m_uartTx = txPin;
 }
 
 Protocol::~Protocol() = default;
 
 esp_err_t Protocol::connect() {
-  ESP_LOGI(TAG, "Connect to ECU:");
-
   wakeup();
   return initialize();
 }
@@ -26,7 +24,7 @@ esp_err_t Protocol::connect() {
 std::optional<CommandResult> Protocol::readData() {
   if (not m_serial) { return std::nullopt; }
 
-  //    Wait minimum package from uart
+  // Wait minimum package from uart
   waitDataFromUart(4);
 
   uint8_t responseConfirm;
@@ -38,7 +36,7 @@ std::optional<CommandResult> Protocol::readData() {
 
     size_t len = m_serial.readBytes(buffer, 3);
     if (len != 3) {
-      ESP_LOGI(TAG, "Error read data from uart");
+      log_w("Error read data from uart");
       return std::nullopt;
     }
 
@@ -48,17 +46,19 @@ std::optional<CommandResult> Protocol::readData() {
   }
 
   if (responseLength == 0) {
-    ESP_LOGI(TAG, "The message is very small");
+    log_w("The message is very small");
     return std::nullopt;
   }
 
   if (responseLength > SOC_UART_FIFO_LEN) {
-    ESP_LOGI(TAG, "The message is too big");
+    log_w("The message is too big");
     return std::nullopt;
   }
 
   //    Create buffer for read
-  auto data = new uint8_t[responseLength];
+  uint8_t data[responseLength];
+//  auto data = new uint8_t[responseLength];
+
   data[0] = responseConfirm;
   data[1] = responseLength;
   data[2] = responseCommand;
@@ -74,7 +74,7 @@ std::optional<CommandResult> Protocol::readData() {
 
     size_t len = m_serial.readBytes(buffer, responsePayloadLength);
     if (len != responsePayloadLength) {
-      ESP_LOGI(TAG, "Error read data from uart");
+      log_w("Error read data from uart");
       return std::nullopt;
     }
 
@@ -86,7 +86,7 @@ std::optional<CommandResult> Protocol::readData() {
   uint8_t responseChecksum = data[responseLength - 1];
   uint8_t calculatedChecksum = calcChecksum(data, responseLength - 1);
   if (responseChecksum != calculatedChecksum) {
-    ESP_LOGI(TAG, "The checksum does not match");
+    log_w("The checksum does not match");
     return std::nullopt;
   }
 
@@ -98,7 +98,7 @@ std::optional<CommandResult> Protocol::readData() {
       .len = responseLength,
   };
 
-  ESP_LOG_BUFFER_HEX(TAG, data, responseLength);
+  log_buf_i(data, responseLength);
 
   return result;
 }
@@ -116,13 +116,13 @@ void Protocol::writeData(uint8_t const* data, size_t len) {
   uint8_t buffer[len];
   m_serial.readBytes(buffer, len);
 
-  ESP_LOG_BUFFER_HEX(TAG, data, len);
+  log_buf_i(data, len);
 }
 
 void Protocol::wakeup() const {
   pinMode(m_uartTx, INPUT_PULLUP);
 
-  ESP_LOGI(TAG, "Wakeup ECU...");
+  log_i("Wakeup ECU...");
 
   digitalWrite(m_uartTx, 0);
   delay(70);
@@ -136,12 +136,12 @@ esp_err_t Protocol::initialize() {
 
   m_serial.begin(10400, SERIAL_8N1, m_uartRx, m_uartTx);
 
-  ESP_LOGI(TAG, "Send wakeup message...");
+  log_i("Send wakeup message...");
   writeData(wakeupMessage, sizeof(wakeupMessage));
 
-  vTaskDelay(20 / portTICK_PERIOD_MS);
+  delay(20);
 
-  ESP_LOGI(TAG, "Send initialize message...");
+  log_i("Send initialize message...");
   writeData(initializeMessage, sizeof(initializeMessage));
 
   auto data = readData();

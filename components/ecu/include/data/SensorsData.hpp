@@ -4,7 +4,7 @@
 
 #pragma once
 
-typedef struct {
+struct SensorsData {
   float tpsPercent;
   float tpsVolts;
   int ectTemp;
@@ -13,4 +13,4 @@ typedef struct {
   float iatVolts;
   float mapPressure;
   float mapVolts;
-} SensorsData_t;
+};
