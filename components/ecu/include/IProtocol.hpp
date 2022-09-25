@@ -20,7 +20,6 @@
 
 #include "CommandResult.hpp"
 #include <esp_err.h>
-#include <optional>
 
 class IProtocol {
  public:
@@ -30,6 +29,6 @@ class IProtocol {
   virtual esp_err_t connect() = 0;
 
  public:
-  virtual std::optional<CommandResult> readData() = 0;
+  virtual CommandResult* readData() = 0;
   virtual void writeData(uint8_t const* data, size_t len) = 0;
 };

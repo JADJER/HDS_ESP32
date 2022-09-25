@@ -25,7 +25,7 @@ class Protocol : public IProtocol {
    * @brief
    * @return
    */
-  std::optional<CommandResult> readData() override;
+  CommandResult* readData() override;
 
   /**
    * @brief

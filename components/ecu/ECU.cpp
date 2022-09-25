@@ -12,8 +12,8 @@ ECU::ECU(IProtocol* protocol) {
   m_isConnected = false;
 
   m_vehicleData = {.id = "undefined", .batteryVolts = 127, .speed = 120, .state = 2};
-  m_engineData = {};
-  m_sensorsData = {};
+  m_engineData = {.rpm = 1300, .fuelInject = 1000, .ignitionAdvance = 10};
+  m_sensorsData = {.tpsPercent = 10, .tpsVolts = 60, .ectTemp = 40, .iatTemp = 16};
   m_errorData = {};
   m_unknownData = {};
 }
@@ -24,8 +24,9 @@ esp_err_t ECU::connect() {
   if (m_isConnected) { return ESP_OK; }
 
   esp_err_t err = m_protocol->connect();
-
-  m_isConnected = err == ESP_OK;
+  if (err == ESP_OK) {
+    m_isConnected = true;
+  }
 
   return err;
 }
@@ -48,7 +49,10 @@ void ECU::detectAllTables() {
     address++;
 
     m_protocol->writeData(message, 5);
-    m_protocol->readData();
+    auto result = m_protocol->readData();
+
+    delete[] result->data;
+    delete result;
   }
 }
 
@@ -99,7 +103,7 @@ UnknownData ECU::getUnknownData() const {
   return m_unknownData;
 }
 
-std::optional<CommandResult> ECU::updateDataFromTable(uint8_t table) {
+CommandResult* ECU::updateDataFromTable(uint8_t table) {
   uint8_t message[5] = {0x72, 0x05, 0x71, table, 0x00};
   message[4] = calcChecksum(message, 4);
 
@@ -109,127 +113,155 @@ std::optional<CommandResult> ECU::updateDataFromTable(uint8_t table) {
 }
 
 esp_err_t ECU::updateDataFromTable0() {
-  auto response = updateDataFromTable(0x0);
-  if (response == std::nullopt) { return ESP_FAIL; }
-  if (response->len != 0xf) { return ESP_FAIL; }
+  auto result = updateDataFromTable(0x0);
+  if (result == nullptr) { return ESP_FAIL; }
+  if (result->length != 0xf) {
+    delete[] result->data;
+    delete result;
+    return ESP_FAIL;
+  }
 
-  for (size_t i = 4; i < response->len - 1; i++) {
-    m_vehicleData.id += std::to_string(static_cast<int>(response->data[i]));
+  for (size_t i = 4; i < (result->length - 1); i++) {
+    m_vehicleData.id += std::to_string(static_cast<int>(result->data[i]));
   }
 
   return ESP_OK;
 }
 
 esp_err_t ECU::updateDataFromTable10() {
-  auto response = updateDataFromTable(0x10);
-  if (response == std::nullopt) { return ESP_FAIL; }
-  if (response->len != 0x16) { return ESP_FAIL; }
+  auto result = updateDataFromTable(0x10);
+  if (result == nullptr) { return ESP_FAIL; }
+  if (result->length != 0x16) {
+    delete[] result->data;
+    delete result;
+    return ESP_FAIL;
+  }
 
-  m_engineData.rpm = (response->data[4] << 8) + response->data[5];
-  m_sensorsData.tpsVolts = calcValueDivide256(response->data[6]);
-  m_sensorsData.tpsPercent = calcValueDivide16(response->data[7]);
-  m_sensorsData.ectVolts = calcValueDivide256(response->data[8]);
-  m_sensorsData.ectTemp = calcValueMinus40(response->data[9]);
-  m_sensorsData.iatVolts = calcValueDivide256(response->data[10]);
-  m_sensorsData.iatTemp = calcValueMinus40(response->data[11]);
-  m_sensorsData.mapVolts = calcValueDivide256(response->data[12]);
-  m_sensorsData.mapPressure = response->data[13];
-  m_vehicleData.batteryVolts = response->data[16];
-  m_vehicleData.speed = response->data[17];
-  m_engineData.fuelInject = (response->data[18] << 8) + response->data[19];
-  m_engineData.ignitionAdvance = response->data[20];
+  m_engineData.rpm = (result->data[4] << 8) + result->data[5];
+  m_sensorsData.tpsVolts = calcValueDivide256(result->data[6]);
+  m_sensorsData.tpsPercent = calcValueDivide16(result->data[7]);
+  m_sensorsData.ectVolts = calcValueDivide256(result->data[8]);
+  m_sensorsData.ectTemp = calcValueMinus40(result->data[9]);
+  m_sensorsData.iatVolts = calcValueDivide256(result->data[10]);
+  m_sensorsData.iatTemp = calcValueMinus40(result->data[11]);
+  m_sensorsData.mapVolts = calcValueDivide256(result->data[12]);
+  m_sensorsData.mapPressure = result->data[13];
+  m_vehicleData.batteryVolts = result->data[16];
+  m_vehicleData.speed = result->data[17];
+  m_engineData.fuelInject = (result->data[18] << 8) + result->data[19];
+  m_engineData.ignitionAdvance = result->data[20];
 
   return ESP_OK;
 }
 
 esp_err_t ECU::updateDataFromTable11() {
-  auto response = updateDataFromTable(0x11);
-  if (response == std::nullopt) { return ESP_FAIL; }
-  if (response->len != 0x19) { return ESP_FAIL; }
+  auto result = updateDataFromTable(0x11);
+  if (result == nullptr) { return ESP_FAIL; }
+  if (result->length != 0x19) {
+    delete[] result->data;
+    delete result;
+    return ESP_FAIL;
+  }
 
-  m_engineData.rpm = (response->data[4] << 8) + response->data[5];
-  m_sensorsData.tpsVolts = calcValueDivide256(response->data[6]);
-  m_sensorsData.tpsPercent = calcValueDivide16(response->data[7]);
-  m_sensorsData.ectVolts = calcValueDivide256(response->data[8]);
-  m_sensorsData.ectTemp = calcValueMinus40(response->data[9]);
-  m_sensorsData.iatVolts = calcValueDivide256(response->data[10]);
-  m_sensorsData.iatTemp = calcValueMinus40(response->data[11]);
-  m_sensorsData.mapVolts = calcValueDivide256(response->data[12]);
-  m_sensorsData.mapPressure = response->data[13];
-  m_vehicleData.batteryVolts = response->data[16];
-  m_vehicleData.speed = response->data[17];
-  m_engineData.fuelInject = (response->data[18] << 8) + response->data[19];
-  m_engineData.ignitionAdvance = response->data[20];
+  m_engineData.rpm = (result->data[4] << 8) + result->data[5];
+  m_sensorsData.tpsVolts = calcValueDivide256(result->data[6]);
+  m_sensorsData.tpsPercent = calcValueDivide16(result->data[7]);
+  m_sensorsData.ectVolts = calcValueDivide256(result->data[8]);
+  m_sensorsData.ectTemp = calcValueMinus40(result->data[9]);
+  m_sensorsData.iatVolts = calcValueDivide256(result->data[10]);
+  m_sensorsData.iatTemp = calcValueMinus40(result->data[11]);
+  m_sensorsData.mapVolts = calcValueDivide256(result->data[12]);
+  m_sensorsData.mapPressure = result->data[13];
+  m_vehicleData.batteryVolts = result->data[16];
+  m_vehicleData.speed = result->data[17];
+  m_engineData.fuelInject = (result->data[18] << 8) + result->data[19];
+  m_engineData.ignitionAdvance = result->data[20];
 
-  m_unknownData.unkData1 = response->data[21];
-  m_unknownData.unkData2 = response->data[22];
-  m_unknownData.unkData3 = response->data[23];
+  m_unknownData.unkData1 = result->data[21];
+  m_unknownData.unkData2 = result->data[22];
+  m_unknownData.unkData3 = result->data[23];
 
   return ESP_OK;
 }
 
 esp_err_t ECU::updateDataFromTable20() {
-  auto response = updateDataFromTable(0x20);
-  if (response == std::nullopt) { return ESP_FAIL; }
-  if (response->len != 0x8) { return ESP_FAIL; }
+  auto result = updateDataFromTable(0x20);
+  if (result == nullptr) { return ESP_FAIL; }
+  if (result->length != 0x8) {
+    delete[] result->data;
+    delete result;
+    return ESP_FAIL;
+  }
 
-  m_unknownData.unkData4 = response->data[4];
-  m_unknownData.unkData5 = response->data[5];
-  m_unknownData.unkData6 = response->data[6];
+  m_unknownData.unkData4 = result->data[4];
+  m_unknownData.unkData5 = result->data[5];
+  m_unknownData.unkData6 = result->data[6];
 
   return ESP_OK;
 }
 
 esp_err_t ECU::updateDataFromTable21() {
-  auto response = updateDataFromTable(0x21);
-  if (response == std::nullopt) { return ESP_FAIL; }
-  if (response->len != 0xb) { return ESP_FAIL; }
+  auto result = updateDataFromTable(0x21);
+  if (result == nullptr) { return ESP_FAIL; }
+  if (result->length != 0xb) {
+    delete[] result->data;
+    delete result;
+    return ESP_FAIL;
+  }
 
-  m_unknownData.unkData1 = response->data[4];
-  m_unknownData.unkData2 = response->data[5];
-  m_unknownData.unkData3 = response->data[6];
-  m_unknownData.unkData4 = response->data[7];
-  m_unknownData.unkData5 = response->data[8];
-  m_unknownData.unkData6 = response->data[9];
+  m_unknownData.unkData1 = result->data[4];
+  m_unknownData.unkData2 = result->data[5];
+  m_unknownData.unkData3 = result->data[6];
+  m_unknownData.unkData4 = result->data[7];
+  m_unknownData.unkData5 = result->data[8];
+  m_unknownData.unkData6 = result->data[9];
 
   return ESP_OK;
 }
 
 esp_err_t ECU::updateDataFromTableD0() {
-  auto response = updateDataFromTable(0xD0);
-  if (response == std::nullopt) { return ESP_FAIL; }
-  if (response->len != 0x13) { return ESP_FAIL; }
+  auto result = updateDataFromTable(0xD0);
+  if (result == nullptr) { return ESP_FAIL; }
+  if (result->length != 0x13) {
+    delete[] result->data;
+    delete result;
+    return ESP_FAIL;
+  }
 
-  m_unknownData.unkData7 = response->data[4];
-  m_unknownData.unkData8 = response->data[5];
-  m_unknownData.unkData9 = response->data[6];
-  m_unknownData.unkData10 = response->data[7];
-  m_unknownData.unkData11 = response->data[8];
-  m_unknownData.unkData12 = response->data[9];
-  m_unknownData.unkData13 = response->data[10];
-  m_unknownData.unkData14 = response->data[11];
-  m_unknownData.unkData15 = response->data[12];
-  m_unknownData.unkData16 = response->data[13];
-  m_unknownData.unkData17 = response->data[14];
-  m_unknownData.unkData18 = response->data[15];
-  m_unknownData.unkData19 = response->data[16];
-  m_unknownData.unkData20 = response->data[17];
+  m_unknownData.unkData7 = result->data[4];
+  m_unknownData.unkData8 = result->data[5];
+  m_unknownData.unkData9 = result->data[6];
+  m_unknownData.unkData10 = result->data[7];
+  m_unknownData.unkData11 = result->data[8];
+  m_unknownData.unkData12 = result->data[9];
+  m_unknownData.unkData13 = result->data[10];
+  m_unknownData.unkData14 = result->data[11];
+  m_unknownData.unkData15 = result->data[12];
+  m_unknownData.unkData16 = result->data[13];
+  m_unknownData.unkData17 = result->data[14];
+  m_unknownData.unkData18 = result->data[15];
+  m_unknownData.unkData19 = result->data[16];
+  m_unknownData.unkData20 = result->data[17];
 
   return ESP_OK;
 }
 
 esp_err_t ECU::updateDataFromTableD1() {
-  auto response = updateDataFromTable(0xD1);
-  if (response == std::nullopt) { return ESP_FAIL; }
-  if (response->len != 0xb) { return ESP_FAIL; }
+  auto result = updateDataFromTable(0xD1);
+  if (result == nullptr) { return ESP_FAIL; }
+  if (result->length != 0xb) {
+    delete[] result->data;
+    delete result;
+    return ESP_FAIL;
+  }
 
-  m_vehicleData.state = response->data[4];
+  m_vehicleData.state = result->data[4];
 
-  m_unknownData.unkData21 = response->data[5];
-  m_unknownData.unkData22 = response->data[6];
-  m_unknownData.unkData23 = response->data[7];
-  m_unknownData.unkData24 = response->data[8];
-  m_unknownData.unkData25 = response->data[9];
+  m_unknownData.unkData21 = result->data[5];
+  m_unknownData.unkData22 = result->data[6];
+  m_unknownData.unkData23 = result->data[7];
+  m_unknownData.unkData24 = result->data[8];
+  m_unknownData.unkData25 = result->data[9];
 
   return ESP_OK;
 }
