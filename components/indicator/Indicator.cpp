@@ -17,8 +17,8 @@
 #include <Arduino.h>
 
 Indicator::Indicator(int pinNum) {
-  m_delay = 500;
   m_pinNum = pinNum;
+  m_taskValue = 0;
   m_threadEnable = false;
 
   pinMode(m_pinNum, OUTPUT);
@@ -43,10 +43,11 @@ void Indicator::disable() {
   digitalWrite(m_pinNum, LOW);
 }
 
-void Indicator::blink(int delayMs) {
-  m_delay = delayMs;
+void Indicator::blink(int value) {
+  m_taskValue = value;
 
   if (m_threadEnable) { return; }
 
-  m_thread = std::thread(&Indicator::blinkTask, this, delayMs);
+  m_threadEnable = true;
+  m_thread = std::thread(&Indicator::blinkTask, this);
 }

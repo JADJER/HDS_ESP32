@@ -24,15 +24,12 @@ BlinkIndicator::BlinkIndicator(int pinNum) : Indicator(pinNum) {}
 
 BlinkIndicator::~BlinkIndicator() = default;
 
-void BlinkIndicator::blinkTask(int delayMs) {
-  m_delay = delayMs;
-  m_threadEnable = true;
-
+void BlinkIndicator::blinkTask() {
   while (m_threadEnable) {
     digitalWrite(m_pinNum, HIGH);
-    delay(m_delay);
+    delay(m_taskValue);
 
     digitalWrite(m_pinNum, LOW);
-    delay(m_delay);
+    delay(m_taskValue);
   }
 }

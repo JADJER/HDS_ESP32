@@ -27,5 +27,5 @@ class BlinkIndicator : public Indicator {
   ~BlinkIndicator() override;
 
  protected:
-  void blinkTask(int delayMs) override;
+  void blinkTask() override;
 };

@@ -32,22 +32,22 @@ class Indicator {
   /**
    * @brief
    */
-  void enable();
+  virtual void enable();
 
   /**
    * @brief
    */
-  void disable();
+  virtual void disable();
 
   /**
    * @brief
    * @param delayMs
    */
-  void blink(int delayMs);
+  virtual void blink(int delayMs);
 
  protected:
-  int m_delay;
   int m_pinNum;
+  int m_taskValue;
   bool m_threadEnable;
   std::thread m_thread;
 
@@ -56,5 +56,5 @@ class Indicator {
    * @brief
    * @param delayMs
    */
-  virtual void blinkTask(int delayMs) = 0;
+  virtual void blinkTask() = 0;
 };

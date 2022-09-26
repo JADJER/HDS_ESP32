@@ -28,6 +28,10 @@ class ErrorCodeIndicator : public Indicator {
   explicit ErrorCodeIndicator(int pinNum);
   ~ErrorCodeIndicator() override;
 
+ public:
+  void enable() override;
+  void disable() override;
+
  protected:
-  void blinkTask(int errorCode) override;
+  void blinkTask() override;
 };

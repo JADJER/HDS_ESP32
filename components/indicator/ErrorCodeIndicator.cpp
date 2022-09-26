@@ -24,27 +24,32 @@ ErrorCodeIndicator::ErrorCodeIndicator(int pinNum) : Indicator(pinNum) {}
 
 ErrorCodeIndicator::~ErrorCodeIndicator() = default;
 
-void ErrorCodeIndicator::blinkTask(int errorCode) {
-  int firstDigit = errorCode / 10;
-  int secondDigit = errorCode % 10;
+void ErrorCodeIndicator::enable() {}
 
+void ErrorCodeIndicator::disable() {}
+
+void ErrorCodeIndicator::blinkTask() {
   while (m_threadEnable) {
+    int firstDigit = m_taskValue / 10;
+
     for (size_t i = 0; i < firstDigit; i++) {
       digitalWrite(m_pinNum, 1);
       delay(500);
+
       digitalWrite(m_pinNum, 0);
       delay(500);
     }
-
     delay(500);
+
+    int secondDigit = m_taskValue % 10;
 
     for (size_t i = 0; i < secondDigit; i++) {
       digitalWrite(m_pinNum, 1);
       delay(250);
+
       digitalWrite(m_pinNum, 0);
       delay(250);
     }
-
     delay(3000);
   }
 }
