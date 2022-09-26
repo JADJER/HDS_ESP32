@@ -78,14 +78,14 @@ Controller::~Controller() = default;
 }
 
 void Controller::spinOnce() {
-  if (Button::isPressed()) {
+  if (m_button.isPressed()) {
     log_i("Detect all tables...");
 
     m_indicator.blink(500);
     m_ecu.detectAllTables();
     m_indicator.enable();
 
-    Button::resetState();
+    m_button.resetState();
   }
 
   m_ecu.updateAllData();
