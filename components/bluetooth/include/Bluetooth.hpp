@@ -23,9 +23,16 @@ class Bluetooth {
   void advertising();
 
  public:
-  void setValueUInt16(std::string const& characteristicUuid, uint16_t value);
-  void setValueFloat(std::string const& characteristicUuid, float value);
-  void setValueString(std::string const& characteristicUuid, std::string const& value);
+  template<typename T>
+  void setValue(std::string const& characteristicUuid, T value) {
+    auto characteristic = m_bleCharacteristicMap.getByUUID(characteristicUuid);
+    if (not characteristic) {
+      return;
+    }
+
+    characteristic->setValue(value);
+    characteristic->notify();
+  }
 
  private:
   BLEServer* m_server;

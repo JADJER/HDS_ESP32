@@ -3,7 +3,6 @@
 //
 
 #include "Bluetooth.hpp"
-#include <Arduino.h>
 #include <BLE2902.h>
 #include <BLEDevice.h>
 #include <BLEUUID.h>
@@ -65,36 +64,4 @@ void Bluetooth::advertising() {
   advertising->setMinPreferred(0x00);
 
   BLEDevice::startAdvertising();
-}
-
-void Bluetooth::setValueUInt16(std::string const& characteristicUuid, uint16_t value) {
-  auto characteristic = m_bleCharacteristicMap.getByUUID(characteristicUuid);
-  if (not characteristic) {
-    return;
-  }
-
-  characteristic->setValue(value);
-  characteristic->notify();
-}
-
-void Bluetooth::setValueFloat(std::string const& characteristicUuid, float value) {
-  auto characteristic = m_bleCharacteristicMap.getByUUID(characteristicUuid);
-  if (not characteristic) {
-    return;
-  }
-
-  characteristic->setValue(value);
-  characteristic->notify();
-}
-
-void Bluetooth::setValueString(std::string const& characteristicUuid, std::string const& value) {
-  auto characteristic = m_bleCharacteristicMap.getByUUID(characteristicUuid);
-  if (not characteristic) {
-    return;
-  }
-
-  characteristic->setValue(value);
-  characteristic->notify();
-
-  delay(10);
 }

@@ -101,7 +101,7 @@ class ECU {
   UnknownData m_unknownData;
 
  private:
-  std::optional<CommandResult> updateDataFromTable(uint8_t table);
+  CommandResult* updateDataFromTable(uint8_t table);
   esp_err_t updateDataFromTable0();
   esp_err_t updateDataFromTable10();
   esp_err_t updateDataFromTable11();

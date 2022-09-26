@@ -7,7 +7,7 @@
 struct EngineData {
   int rpm;
   int fuelInject;
-  float ignitionAdvance;
+  int ignitionAdvance;
   int unkData1;
   int unkData2;
   int unkData3;
