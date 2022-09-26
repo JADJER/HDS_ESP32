@@ -4,14 +4,12 @@ set(CMAKE_CXX_STANDARD 17)
 
 set(SOURCES
         main.cpp
-        Controller.cpp
-        )
+        Controller.cpp)
 
 set(COMPONENTS
-        bluetooth
-        ecu
         indicator
-        test_button
-        )
+        button
+        bluetooth
+        ecu)
 
 idf_component_register(SRCS ${SOURCES} INCLUDE_DIRS . REQUIRES ${COMPONENTS})

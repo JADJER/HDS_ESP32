@@ -106,18 +106,20 @@ void Protocol::writeData(uint8_t const* data, size_t len) {
 }
 
 void Protocol::wakeup() const {
-  pinMode(m_uartTx, INPUT_PULLUP);
-
   log_i("Wakeup ECU...");
 
-  digitalWrite(m_uartTx, 0);
+  pinMode(m_uartTx, OUTPUT);
+
+  digitalWrite(m_uartTx, LOW);
   delay(70);
 
-  digitalWrite(m_uartTx, 1);
+  digitalWrite(m_uartTx, HIGH);
   delay(130);
 }
 
 esp_err_t Protocol::initialize() {
+  log_i("Initialize ECU...");
+
   uint8_t wakeupMessage[] = {0xFE, 0x04, 0xFF, 0xFF};
   uint8_t initializeMessage[] = {0x72, 0x05, 0x00, 0xF0, 0x99};
 
