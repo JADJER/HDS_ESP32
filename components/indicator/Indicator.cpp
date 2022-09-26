@@ -16,8 +16,6 @@
 
 #include <Arduino.h>
 
-Indicator::Indicator() : Indicator(2) {}
-
 Indicator::Indicator(int pinNum) {
   m_pinNum = pinNum;
   m_threadEnable = false;

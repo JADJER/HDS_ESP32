@@ -26,9 +26,8 @@
  */
 class Indicator {
  public:
-  Indicator();
   explicit Indicator(int pinNum);
-  virtual ~Indicator();
+  ~Indicator();
 
  public:
   /**

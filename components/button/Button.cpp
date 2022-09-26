@@ -10,8 +10,6 @@ void ARDUINO_ISR_ATTR isr() {
   buttonIsPressed = true;
 }
 
-Button::Button() : Button(0) {}
-
 Button::Button(int8_t buttonPin) {
   m_buttonPin = buttonPin;
 

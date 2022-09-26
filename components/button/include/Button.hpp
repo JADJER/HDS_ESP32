@@ -11,7 +11,6 @@
  */
 class Button {
  public:
-  Button();
   explicit Button(int8_t buttonPin);
   ~Button();
 
