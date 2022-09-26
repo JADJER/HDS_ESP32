@@ -13,48 +13,26 @@
 // limitations under the License.
 
 //
-// Created by jadjer on 23.09.22.
+// Created by jadjer on 26.09.22.
 //
 
-#pragma once
+#include "BlinkIndicator.hpp"
 
-#include <thread>
+#include <Arduino.h>
 
-/**
- * @brief
- */
-class Indicator {
- public:
-  explicit Indicator(int pinNum);
-  virtual ~Indicator();
+BlinkIndicator::BlinkIndicator(int pinNum) : Indicator(pinNum) {}
 
- public:
-  /**
-   * @brief
-   */
-  void enable();
+BlinkIndicator::~BlinkIndicator() = default;
 
-  /**
-   * @brief
-   */
-  void disable();
+void BlinkIndicator::blinkTask(int delayMs) {
+  m_delay = delayMs;
+  m_threadEnable = true;
 
-  /**
-   * @brief
-   * @param delayMs
-   */
-  void blink(int delayMs);
+  while (m_threadEnable) {
+    digitalWrite(m_pinNum, HIGH);
+    delay(m_delay);
 
- protected:
-  int m_delay;
-  int m_pinNum;
-  bool m_threadEnable;
-  std::thread m_thread;
-
-  protected:
-  /**
-   * @brief
-   * @param delayMs
-   */
-  virtual void blinkTask(int delayMs) = 0;
-};
+    digitalWrite(m_pinNum, LOW);
+    delay(m_delay);
+  }
+}

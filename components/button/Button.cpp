@@ -7,7 +7,9 @@
 static bool buttonIsPressed = false;
 
 void ARDUINO_ISR_ATTR isr() {
-  buttonIsPressed = true;
+  if (not buttonIsPressed) {
+    buttonIsPressed = true;
+  }
 }
 
 Button::Button(int8_t buttonPin) {
@@ -21,7 +23,7 @@ Button::~Button() {
   detachInterrupt(m_buttonPin);
 }
 
-bool Button::isPressed() {
+bool Button::isPressed() const {
   return buttonIsPressed;
 }
 

@@ -20,11 +20,11 @@ class Controller {
   [[noreturn]] void spin();
 
  private:
-  Indicator m_indicator;
+  Indicator* m_indicator;
   Button m_button;
   Protocol m_protocol;
   ECU m_ecu;
-  Bluetooth m_bluetooth;
+  BluetoothServer* m_bluetoothServer;
 
  private:
   void spinOnce();
