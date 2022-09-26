@@ -11,9 +11,14 @@ ECU::ECU(IProtocol* protocol) {
   m_protocol = protocol;
   m_isConnected = false;
 
-  m_vehicleData = {.id = "undefined", .batteryVolts = 127, .speed = 120, .state = 2};
-  m_engineData = {.rpm = 1300, .fuelInject = 1000, .ignitionAdvance = 10};
-  m_sensorsData = {.tpsPercent = 10, .tpsVolts = 60, .ectTemp = 40, .iatTemp = 16};
+  m_enableTable10 = true;
+  m_enableTable11 = true;
+  m_enableTable20 = true;
+  m_enableTable21 = true;
+
+  m_vehicleData = {};
+  m_engineData = {};
+  m_sensorsData = {};
   m_errorData = {};
   m_unknownData = {};
 }
@@ -63,10 +68,10 @@ void ECU::detectActiveTables() {
 
   updateDataFromTable0();
 
-  if (updateDataFromTable10()) { m_enableTable10 = true; }
-  if (updateDataFromTable11()) { m_enableTable11 = true; }
-  if (updateDataFromTable20()) { m_enableTable20 = true; }
-  if (updateDataFromTable21()) { m_enableTable21 = true; }
+  if (updateDataFromTable10() == ESP_OK) { m_enableTable10 = true; }
+  if (updateDataFromTable11() == ESP_OK) { m_enableTable11 = true; }
+  if (updateDataFromTable20() == ESP_OK) { m_enableTable20 = true; }
+  if (updateDataFromTable21() == ESP_OK) { m_enableTable21 = true; }
 }
 
 void ECU::updateAllData() {

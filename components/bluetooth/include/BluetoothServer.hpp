@@ -46,7 +46,6 @@ class BluetoothServer {
     }
 
     characteristic->setValue(value);
-    characteristic->notify();
   }
 
  private:

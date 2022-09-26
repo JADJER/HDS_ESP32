@@ -15,9 +15,6 @@ Controller::Controller() : m_indicator(new BlinkIndicator(2)), m_button(0), m_pr
   auto bluetooth = Bluetooth("HDS");
 
   m_bluetoothServer = bluetooth.createServer();
-  m_bluetoothServer->createService(SERVICE_STATE_UUID, {
-                                                           STATE_CONNECTED_UUID,
-                                                       });
   m_bluetoothServer->createService(SERVICE_VEHICLE_UUID, {
                                                              VEHICLE_BATTERY_UUID,
                                                              VEHICLE_SPEED_UUID,
@@ -42,7 +39,6 @@ Controller::Controller() : m_indicator(new BlinkIndicator(2)), m_button(0), m_pr
                                                              SENSORS_MAP_VOLTAGE_UUID,
                                                          });
   m_bluetoothServer->start();
-  m_bluetoothServer->setValue(STATE_CONNECTED_UUID, "Connecting...");
   m_bluetoothServer->advertising();
 
   log_i("Connect to ECU...");
@@ -61,12 +57,8 @@ Controller::Controller() : m_indicator(new BlinkIndicator(2)), m_button(0), m_pr
     if (errorConnection == ESP_ERR_INVALID_ARG) { m_indicator->blink(3); }
     if (errorConnection == ESP_ERR_INVALID_CRC) { m_indicator->blink(4); }
 
-    m_bluetoothServer->setValue(STATE_CONNECTED_UUID, "Disconnected");
-
     return;
   }
-
-  m_bluetoothServer->setValue(STATE_CONNECTED_UUID, "Connected");
 
   log_i("Detect active tables...");
   m_indicator->blink(500);

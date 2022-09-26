@@ -3,11 +3,11 @@
 //
 
 #include "include/BluetoothServer.hpp"
+#include "AdvertisedHdsDeviceCallbacks.hpp"
 #include <Arduino.h>
 #include <BLE2902.h>
 #include <BLEDevice.h>
 #include <BLEUUID.h>
-#include "AdvertisedHdsDeviceCallbacks.hpp"
 
 BluetoothServer::BluetoothServer() : m_bleCharacteristicMap() {
   m_server = BLEDevice::createServer();
@@ -16,15 +16,11 @@ BluetoothServer::BluetoothServer() : m_bleCharacteristicMap() {
 BluetoothServer::~BluetoothServer() = default;
 
 BLEService* BluetoothServer::createService(std::string const& serviceUUID, std::vector<std::string> const& characteristicsUUID) {
-  auto service = m_server->createService(serviceUUID, characteristicsUUID.size() * 3 + 1);
+  auto service = m_server->createService(serviceUUID, characteristicsUUID.size() * 2 + 1);
   m_bleServiceMap.setByUUID(serviceUUID, service);
 
   for (auto& characteristicUUID : characteristicsUUID) {
-    auto characteristic = service->createCharacteristic(
-        characteristicUUID,
-        BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY);
-
-    characteristic->addDescriptor(new BLE2902());
+    auto characteristic = service->createCharacteristic(characteristicUUID, BLECharacteristic::PROPERTY_READ);
 
     m_bleCharacteristicMap.setByUUID(characteristic, characteristicUUID);
   }
