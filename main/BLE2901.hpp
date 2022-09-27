@@ -13,10 +13,14 @@
 // limitations under the License.
 
 //
-// Created by jadjer on 24.09.22.
+// Created by jadjer on 27.09.22.
 //
 
 #pragma once
 
-class BluetoothClient {
+#include <BLEDescriptor.h>
+
+class BLE2901 : public BLEDescriptor {
+ public:
+  explicit BLE2901(std::string const& name);
 };

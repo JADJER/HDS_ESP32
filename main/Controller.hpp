@@ -4,12 +4,13 @@
 
 #pragma once
 
-#include "Bluetooth.hpp"
 #include "Button.hpp"
 #include "ECU.hpp"
 #include "Indicator.hpp"
 #include "Protocol.hpp"
 #include <esp_err.h>
+#include <BLEServer.h>
+#include <BLECharacteristic.h>
 
 class Controller {
  public:
@@ -24,7 +25,24 @@ class Controller {
   Button m_button;
   Protocol m_protocol;
   ECU m_ecu;
-  BluetoothServer* m_bluetoothServer;
+  BLEServer* m_server;
+  BLECharacteristic * m_vehicleBattery;
+  BLECharacteristic * m_vehicleSpeed;
+  BLECharacteristic * m_vehicleState;
+  BLECharacteristic * m_engineRpm;
+  BLECharacteristic * m_engineFuelInject;
+  BLECharacteristic * m_engineIgnitionAdvance;
+  BLECharacteristic * m_engineUnk1;
+  BLECharacteristic * m_engineUnk2;
+  BLECharacteristic * m_engineUnk3;
+  BLECharacteristic * m_sensorTpsPercent;
+  BLECharacteristic * m_sensorTpsVoltage;
+  BLECharacteristic * m_sensorEctTemp;
+  BLECharacteristic * m_sensorEctVoltage;
+  BLECharacteristic * m_sensorIatTemp;
+  BLECharacteristic * m_sensorIatVoltage;
+  BLECharacteristic * m_sensorMapPressure;
+  BLECharacteristic * m_sensorMapVoltage;
 
  private:
   void spinOnce();

@@ -27,6 +27,6 @@ bool Button::isPressed() const {
   return buttonIsPressed;
 }
 
-void Button::resetState() {
+void Button::resetState() const {
   buttonIsPressed = false;
 }

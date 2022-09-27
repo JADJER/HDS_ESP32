@@ -33,10 +33,10 @@ void ErrorCodeIndicator::blinkTask() {
     int firstDigit = m_taskValue / 10;
 
     for (size_t i = 0; i < firstDigit; i++) {
-      digitalWrite(m_pinNum, 1);
+      digitalWrite(m_pinNum, HIGH);
       delay(500);
 
-      digitalWrite(m_pinNum, 0);
+      digitalWrite(m_pinNum, LOW);
       delay(500);
     }
     delay(500);
@@ -44,10 +44,10 @@ void ErrorCodeIndicator::blinkTask() {
     int secondDigit = m_taskValue % 10;
 
     for (size_t i = 0; i < secondDigit; i++) {
-      digitalWrite(m_pinNum, 1);
+      digitalWrite(m_pinNum, HIGH);
       delay(250);
 
-      digitalWrite(m_pinNum, 0);
+      digitalWrite(m_pinNum, LOW);
       delay(250);
     }
     delay(3000);

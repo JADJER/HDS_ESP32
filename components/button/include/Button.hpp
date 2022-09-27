@@ -24,7 +24,7 @@ class Button {
   /**
    * @brief
    */
-  void resetState();
+  void resetState() const;
 
  private:
   int8_t m_buttonPin;

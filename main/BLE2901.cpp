@@ -13,14 +13,11 @@
 // limitations under the License.
 
 //
-// Created by jadjer on 24.09.22.
+// Created by jadjer on 27.09.22.
 //
 
-#pragma once
+#include "BLE2901.hpp"
 
-#include <BLEAdvertisedDevice.h>
-
-class AdvertisedHDSDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
- public:
-  void onResult(BLEAdvertisedDevice advertisedDevice) override;
-};
+BLE2901::BLE2901(std::string const& name) : BLEDescriptor(BLEUUID((uint16_t) 0x2901)) {
+  setValue(name);
+}

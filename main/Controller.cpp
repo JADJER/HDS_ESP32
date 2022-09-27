@@ -7,39 +7,103 @@
 #include "ErrorCodeIndicator.hpp"
 #include "ServicesUUID.hpp"
 #include <Arduino.h>
+#include <BLE2902.h>
+#include "BLE2901.hpp"
+#include <BLEDevice.h>
 
 Controller::Controller() : m_indicator(new BlinkIndicator(2)), m_button(0), m_protocol(16, 17), m_ecu(&m_protocol) {
+  BLEDevice::init("HDS");
+
   log_i("Start bluetooth server...");
   m_indicator->blink(100);
 
-  auto bluetooth = Bluetooth("HDS");
+  m_server = BLEDevice::createServer();
 
-  m_bluetoothServer = bluetooth.createServer();
-  m_bluetoothServer->createService(SERVICE_VEHICLE_UUID, {
-                                                             VEHICLE_BATTERY_UUID,
-                                                             VEHICLE_SPEED_UUID,
-                                                             VEHICLE_STATE_UUID,
-                                                         });
-  m_bluetoothServer->createService(SERVICE_ENGINE_UUID, {
-                                                            ENGINE_FUEL_INJECT_UUID,
-                                                            ENGINE_IGNITION_ADVANCE_UUID,
-                                                            ENGINE_RPM_UUID,
-                                                            ENGINE_UNKNOWN_1_UUID,
-                                                            ENGINE_UNKNOWN_2_UUID,
-                                                            ENGINE_UNKNOWN_3_UUID,
-                                                        });
-  m_bluetoothServer->createService(SERVICE_SENSORS_UUID, {
-                                                             SENSORS_TPS_PERCENT_UUID,
-                                                             SENSORS_TPS_VOLTAGE_UUID,
-                                                             SENSORS_ECT_TEMP_UUID,
-                                                             SENSORS_ECT_VOLTAGE_UUID,
-                                                             SENSORS_IAT_TEMP_UUID,
-                                                             SENSORS_IAT_VOLTAGE_UUID,
-                                                             SENSORS_MAP_PRESSURE_UUID,
-                                                             SENSORS_MAP_VOLTAGE_UUID,
-                                                         });
-  m_bluetoothServer->start();
-  m_bluetoothServer->advertising();
+  {
+    auto service = m_server->createService(serviceVehicleUUID, 16);
+
+    m_vehicleBattery = service->createCharacteristic(vehicleBatteryUUID, BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY);
+    m_vehicleBattery->addDescriptor(new BLE2901("Battery"));
+    m_vehicleBattery->addDescriptor(new BLE2902());
+
+    m_vehicleSpeed = service->createCharacteristic(vehicleSpeedUUID, BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY);
+    m_vehicleSpeed->addDescriptor(new BLE2901("Speed"));
+    m_vehicleSpeed->addDescriptor(new BLE2902());
+
+    m_vehicleState = service->createCharacteristic(vehicleStateUUID, BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY);
+    m_vehicleState->addDescriptor(new BLE2901("State"));
+    m_vehicleState->addDescriptor(new BLE2902());
+
+    service->start();
+  }
+
+  {
+    auto service = m_server->createService(serviceEngineUUID, 21);
+
+    m_engineRpm = service->createCharacteristic(engineRpmUUID, BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY);
+    m_engineRpm->addDescriptor(new BLE2901("RPM"));
+    m_engineRpm->addDescriptor(new BLE2902());
+
+    m_engineFuelInject = service->createCharacteristic(engineFuelInjectUUID, BLECharacteristic::PROPERTY_READ);
+    m_engineFuelInject->addDescriptor(new BLE2901("Fuel Inject"));
+
+    m_engineIgnitionAdvance = service->createCharacteristic(engineIgnitionAdvanceUUID, BLECharacteristic::PROPERTY_READ);
+    m_engineIgnitionAdvance->addDescriptor(new BLE2901("Ignition Advance"));
+
+    m_engineUnk1 = service->createCharacteristic(engineUnknown1UUID, BLECharacteristic::PROPERTY_READ);
+    m_engineUnk1->addDescriptor(new BLE2901("Unknown 1"));
+
+    m_engineUnk2 = service->createCharacteristic(engineUnknown2UUID, BLECharacteristic::PROPERTY_READ);
+    m_engineUnk2->addDescriptor(new BLE2901("Unknown 2"));
+
+    m_engineUnk3 = service->createCharacteristic(engineUnknown3UUID, BLECharacteristic::PROPERTY_READ);
+    m_engineUnk3->addDescriptor(new BLE2901("Unknown 2"));
+
+    service->start();
+  }
+
+  {
+    auto service = m_server->createService(serviceSensorsUUID, 33);
+
+    m_sensorTpsPercent = service->createCharacteristic(sensorTpsPercentUUID, BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY);
+    m_sensorTpsPercent->addDescriptor(new BLE2901("TPS Percent"));
+    m_sensorTpsPercent->addDescriptor(new BLE2902());
+
+    m_sensorTpsVoltage = service->createCharacteristic(sensorTpsVoltageUUID, BLECharacteristic::PROPERTY_READ);
+    m_sensorTpsVoltage->addDescriptor(new BLE2901("TPS Voltage"));
+
+    m_sensorEctTemp = service->createCharacteristic(sensorEctTempUUID, BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY);
+    m_sensorEctTemp->addDescriptor(new BLE2901("ECT Temp"));
+    m_sensorEctTemp->addDescriptor(new BLE2902());
+
+    m_sensorEctVoltage = service->createCharacteristic(sensorEctVoltageUUID, BLECharacteristic::PROPERTY_READ);
+    m_sensorEctVoltage->addDescriptor(new BLE2901("ECT Voltage"));
+
+    m_sensorIatTemp = service->createCharacteristic(sensorIatTempUUID, BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY);
+    m_sensorIatTemp->addDescriptor(new BLE2901("IAT Temp"));
+    m_sensorIatTemp->addDescriptor(new BLE2902());
+
+    m_sensorIatVoltage = service->createCharacteristic(sensorIatVoltageUUID, BLECharacteristic::PROPERTY_READ);
+    m_sensorIatVoltage->addDescriptor(new BLE2901("IAT Voltage"));
+
+    m_sensorMapPressure = service->createCharacteristic(sensorMapPressureUUID, BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY);
+    m_sensorMapPressure->addDescriptor(new BLE2901("MAP Pressure"));
+    m_sensorMapPressure->addDescriptor(new BLE2902());
+
+    m_sensorMapVoltage = service->createCharacteristic(sensorMapVoltageUUID, BLECharacteristic::PROPERTY_READ);
+    m_sensorMapVoltage->addDescriptor(new BLE2901("MAP Voltage"));
+
+    service->start();
+  }
+
+  BLEAdvertising* pAdvertising = BLEDevice::getAdvertising();
+  pAdvertising->addServiceUUID(serviceVehicleUUID);
+  pAdvertising->addServiceUUID(serviceEngineUUID);
+  pAdvertising->addServiceUUID(serviceSensorsUUID);
+  pAdvertising->setScanResponse(false);
+  pAdvertising->setMinPreferred(0x0);
+
+  BLEDevice::startAdvertising();
 
   log_i("Connect to ECU...");
   m_indicator->blink(250);
@@ -92,25 +156,46 @@ void Controller::spinOnce() {
   m_ecu.updateAllData();
 
   auto vehicleData = m_ecu.getVehicleData();
-  m_bluetoothServer->setValue(VEHICLE_BATTERY_UUID, vehicleData.batteryVolts);
-  m_bluetoothServer->setValue(VEHICLE_SPEED_UUID, vehicleData.speed);
-  m_bluetoothServer->setValue(VEHICLE_STATE_UUID, vehicleData.state);
+
+  m_vehicleBattery->setValue(vehicleData.batteryVolts);
+  m_vehicleBattery->notify();
+
+  m_vehicleSpeed->setValue(vehicleData.speed);
+  m_vehicleSpeed->notify();
+
+  m_vehicleState->setValue(vehicleData.state);
+  m_vehicleState->notify();
 
   auto engineData = m_ecu.getEngineData();
-  m_bluetoothServer->setValue(ENGINE_RPM_UUID, engineData.rpm);
-  m_bluetoothServer->setValue(ENGINE_FUEL_INJECT_UUID, engineData.fuelInject);
-  m_bluetoothServer->setValue(ENGINE_IGNITION_ADVANCE_UUID, engineData.ignitionAdvance);
-  m_bluetoothServer->setValue(ENGINE_UNKNOWN_1_UUID, engineData.unkData1);
-  m_bluetoothServer->setValue(ENGINE_UNKNOWN_2_UUID, engineData.unkData2);
-  m_bluetoothServer->setValue(ENGINE_UNKNOWN_3_UUID, engineData.unkData3);
+
+  m_engineRpm->setValue(engineData.rpm);
+  m_engineRpm->notify();
+
+  m_engineFuelInject->setValue(engineData.fuelInject);
+  m_engineIgnitionAdvance->setValue(engineData.ignitionAdvance);
+  m_engineUnk1->setValue(engineData.unkData1);
+  m_engineUnk2->setValue(engineData.unkData2);
+  m_engineUnk3->setValue(engineData.unkData3);
 
   auto sensorsData = m_ecu.getSensorsData();
-  m_bluetoothServer->setValue(SENSORS_TPS_PERCENT_UUID, sensorsData.tpsPercent);
-  m_bluetoothServer->setValue(SENSORS_TPS_VOLTAGE_UUID, sensorsData.tpsVolts);
-  m_bluetoothServer->setValue(SENSORS_IAT_TEMP_UUID, sensorsData.iatTemp);
-  m_bluetoothServer->setValue(SENSORS_IAT_VOLTAGE_UUID, sensorsData.iatVolts);
-  m_bluetoothServer->setValue(SENSORS_ECT_TEMP_UUID, sensorsData.ectTemp);
-  m_bluetoothServer->setValue(SENSORS_ECT_VOLTAGE_UUID, sensorsData.ectVolts);
-  m_bluetoothServer->setValue(SENSORS_MAP_PRESSURE_UUID, sensorsData.mapPressure);
-  m_bluetoothServer->setValue(SENSORS_MAP_VOLTAGE_UUID, sensorsData.mapVolts);
+
+  m_sensorTpsPercent->setValue(sensorsData.tpsPercent);
+  m_sensorTpsPercent->notify();
+
+  m_sensorTpsVoltage->setValue(sensorsData.tpsVolts);
+
+  m_sensorIatTemp->setValue(sensorsData.iatTemp);
+  m_sensorIatTemp->notify();
+
+  m_sensorIatVoltage->setValue(sensorsData.iatVolts);
+
+  m_sensorEctTemp->setValue(sensorsData.ectTemp);
+  m_sensorEctTemp->notify();
+
+  m_sensorEctVoltage->setValue(sensorsData.ectVolts);
+
+  m_sensorMapPressure->setValue(sensorsData.mapPressure);
+  m_sensorMapPressure->notify();
+
+  m_sensorMapVoltage->setValue(sensorsData.mapVolts);
 }
