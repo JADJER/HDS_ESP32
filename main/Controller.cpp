@@ -6,6 +6,7 @@
 #include "BLE2901.hpp"
 #include "BlinkIndicator.hpp"
 #include "ErrorCodeIndicator.hpp"
+#include "ServerCallbacks.hpp"
 #include "ServicesUUID.hpp"
 #include <Arduino.h>
 #include <BLE2902.h>
@@ -18,6 +19,7 @@ Controller::Controller() : m_indicator(new BlinkIndicator(2)), m_button(0), m_pr
   m_indicator->blink(100);
 
   m_server = BLEDevice::createServer();
+  m_server->setCallbacks(new ServerCallbacks());
 
   {
     auto service = m_server->createService(serviceVehicleUUID, 16);
@@ -96,7 +98,7 @@ Controller::Controller() : m_indicator(new BlinkIndicator(2)), m_button(0), m_pr
     service->start();
   }
 
-  BLEAdvertising* advertising = BLEDevice::getAdvertising();
+  auto advertising = m_server->getAdvertising();
   advertising->addServiceUUID(serviceAdvertiseUUID);
   advertising->start();
 
