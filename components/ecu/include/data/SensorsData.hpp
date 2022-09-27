@@ -5,12 +5,12 @@
 #pragma once
 
 struct SensorsData {
-  int tpsPercent;
-  int tpsVolts;
+  float tpsPercent;
+  float tpsVolts;
   int ectTemp;
-  int ectVolts;
+  float ectVolts;
   int iatTemp;
-  int iatVolts;
-  int mapPressure;
-  int mapVolts;
+  float iatVolts;
+  float mapPressure;
+  float mapVolts;
 };

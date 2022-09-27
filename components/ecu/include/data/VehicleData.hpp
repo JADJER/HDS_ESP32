@@ -8,7 +8,7 @@
 
 struct VehicleData {
   std::string id;
-  int batteryVolts;
+  float batteryVolts;
   int speed;
   int state;
 };
