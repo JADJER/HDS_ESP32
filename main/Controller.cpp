@@ -98,8 +98,7 @@ Controller::Controller() : m_indicator(new BlinkIndicator(2)), m_button(0), m_pr
 
   BLEAdvertising* advertising = BLEDevice::getAdvertising();
   advertising->addServiceUUID(serviceAdvertiseUUID);
-
-  BLEDevice::startAdvertising();
+  advertising->start();
 
   log_i("Connect to ECU...");
   m_indicator->blink(250);
