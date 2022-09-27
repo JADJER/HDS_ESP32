@@ -96,12 +96,8 @@ Controller::Controller() : m_indicator(new BlinkIndicator(2)), m_button(0), m_pr
     service->start();
   }
 
-  BLEAdvertising* pAdvertising = BLEDevice::getAdvertising();
-  pAdvertising->addServiceUUID(serviceVehicleUUID);
-  pAdvertising->addServiceUUID(serviceEngineUUID);
-  pAdvertising->addServiceUUID(serviceSensorsUUID);
-  pAdvertising->setScanResponse(false);
-  pAdvertising->setMinPreferred(0x0);
+  BLEAdvertising* advertising = BLEDevice::getAdvertising();
+  advertising->addServiceUUID(serviceAdvertiseUUID);
 
   BLEDevice::startAdvertising();
 

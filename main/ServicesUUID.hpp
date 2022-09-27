@@ -20,35 +20,37 @@
 
 #include <BLEUUID.h>
 
-const auto serviceVehicleUUID =  BLEUUID("9d1e62fc-e0a9-4250-8743-ba7be5820622");
-const auto vehicleBatteryUUID =  BLEUUID("abb0a0d1-08d9-4522-87d8-38c1c3b575f7");
-const auto vehicleSpeedUUID =  BLEUUID("f6f83d7b-afb3-4715-8d54-9eb7f867b1ae");
-const auto vehicleStateUUID =  BLEUUID("420b960b-3fca-4b84-a224-2dddd55dc7d8");
+static auto serviceAdvertiseUUID = BLEUUID("7def33bd-e4b5-409b-86e8-805f6e882d69");
 
-const auto serviceEngineUUID =  BLEUUID("df874d19-7246-4370-9b4c-a80955191ad4");
-const auto engineRpmUUID =  BLEUUID("2f4c7890-5477-4803-80a3-46a066310a77");
-const auto engineFuelInjectUUID =  BLEUUID("ac986e86-034e-4561-8944-148c16712abc");
-const auto engineIgnitionAdvanceUUID =  BLEUUID("f269fec2-766d-4833-9a9b-0c0ad457cf7c");
-const auto engineUnknown1UUID =  BLEUUID("5861773c-3d66-44f3-af15-74bea87d2557");
-const auto engineUnknown2UUID =  BLEUUID("138b4ae7-61ef-4783-bee8-3e8dc1f745b9");
-const auto engineUnknown3UUID =  BLEUUID("8d0edd85-0774-49bb-8cc5-294164429f50");
+static auto serviceVehicleUUID = BLEUUID("9d1e62fc-e0a9-4250-8743-ba7be5820622");
+static auto vehicleBatteryUUID = BLEUUID("abb0a0d1-08d9-4522-87d8-38c1c3b575f7");
+static auto vehicleSpeedUUID = BLEUUID("f6f83d7b-afb3-4715-8d54-9eb7f867b1ae");
+static auto vehicleStateUUID = BLEUUID("420b960b-3fca-4b84-a224-2dddd55dc7d8");
 
-const auto serviceSensorsUUID =  BLEUUID("d4b4fc17-fde2-45ce-b0cb-2a22910a67f1");
-const auto sensorTpsPercentUUID = BLEUUID("519fa904-6022-4247-9a3d-35e72d75f2c6");
-const auto sensorTpsVoltageUUID = BLEUUID("acc5be7a-af25-4c38-8ced-2a343eff00fb");
-const auto sensorEctTempUUID = BLEUUID("eb2a13ea-1e8c-4c27-9420-4c97b2c9d7d5");
-const auto sensorEctVoltageUUID = BLEUUID("0c7dd6fd-dac9-40d8-8a3d-52ffa8d81dc9");
-const auto sensorIatTempUUID = BLEUUID("f30cab3f-69ad-440b-b6ce-d632780e8a36");
-const auto sensorIatVoltageUUID = BLEUUID("06800dbe-bff0-4101-b679-4c0005c78405");
-const auto sensorMapPressureUUID = BLEUUID("390e26f6-3026-4514-92cb-66ad7ff24a6c");
-const auto sensorMapVoltageUUID = BLEUUID("2bdc16dd-b921-4b60-82c4-f51fecf3b0f3");
+static auto serviceEngineUUID = BLEUUID("df874d19-7246-4370-9b4c-a80955191ad4");
+static auto engineRpmUUID = BLEUUID("2f4c7890-5477-4803-80a3-46a066310a77");
+static auto engineFuelInjectUUID = BLEUUID("ac986e86-034e-4561-8944-148c16712abc");
+static auto engineIgnitionAdvanceUUID = BLEUUID("f269fec2-766d-4833-9a9b-0c0ad457cf7c");
+static auto engineUnknown1UUID = BLEUUID("5861773c-3d66-44f3-af15-74bea87d2557");
+static auto engineUnknown2UUID = BLEUUID("138b4ae7-61ef-4783-bee8-3e8dc1f745b9");
+static auto engineUnknown3UUID = BLEUUID("8d0edd85-0774-49bb-8cc5-294164429f50");
 
-const auto serviceSettingsUUID = BLEUUID("045cc171-7d99-436f-826c-28fad2ef0df9");
-const auto settingDistanceUUID = BLEUUID("29bbb961-1de7-414c-931d-10af437ac2bb");
-const auto settingDelayUUID = BLEUUID("19f3ba3d-049a-4ea8-82eb-d9a7952cc3c1");
+static auto serviceSensorsUUID = BLEUUID("d4b4fc17-fde2-45ce-b0cb-2a22910a67f1");
+static auto sensorTpsPercentUUID = BLEUUID("519fa904-6022-4247-9a3d-35e72d75f2c6");
+static auto sensorTpsVoltageUUID = BLEUUID("acc5be7a-af25-4c38-8ced-2a343eff00fb");
+static auto sensorEctTempUUID = BLEUUID("eb2a13ea-1e8c-4c27-9420-4c97b2c9d7d5");
+static auto sensorEctVoltageUUID = BLEUUID("0c7dd6fd-dac9-40d8-8a3d-52ffa8d81dc9");
+static auto sensorIatTempUUID = BLEUUID("f30cab3f-69ad-440b-b6ce-d632780e8a36");
+static auto sensorIatVoltageUUID = BLEUUID("06800dbe-bff0-4101-b679-4c0005c78405");
+static auto sensorMapPressureUUID = BLEUUID("390e26f6-3026-4514-92cb-66ad7ff24a6c");
+static auto sensorMapVoltageUUID = BLEUUID("2bdc16dd-b921-4b60-82c4-f51fecf3b0f3");
 
-const auto serviceMonitorUUID = BLEUUID("2d0d2cba-85b8-428f-ab5c-fc5d12b22d1a");
-const auto monitorOilLevelUUID = BLEUUID("d30e60b4-4097-4b32-bf2b-5cb3b2306b52");
+static auto serviceSettingsUUID = BLEUUID("045cc171-7d99-436f-826c-28fad2ef0df9");
+static auto settingDistanceUUID = BLEUUID("29bbb961-1de7-414c-931d-10af437ac2bb");
+static auto settingDelayUUID = BLEUUID("19f3ba3d-049a-4ea8-82eb-d9a7952cc3c1");
+
+static auto serviceMonitorUUID = BLEUUID("2d0d2cba-85b8-428f-ab5c-fc5d12b22d1a");
+static auto monitorOilLevelUUID = BLEUUID("d30e60b4-4097-4b32-bf2b-5cb3b2306b52");
 
 #define SERVICE_UNKNOWN_UUID "af50deb7-2cc5-4436-87e0-ce784f35ae2d"
 #define UNKNOWN_DATA_1_UUID "dc639c42-f3c8-4bf2-8d0d-37ea801c9773"
