@@ -43,6 +43,13 @@ const auto sensorIatVoltageUUID = BLEUUID("06800dbe-bff0-4101-b679-4c0005c78405"
 const auto sensorMapPressureUUID = BLEUUID("390e26f6-3026-4514-92cb-66ad7ff24a6c");
 const auto sensorMapVoltageUUID = BLEUUID("2bdc16dd-b921-4b60-82c4-f51fecf3b0f3");
 
+const auto serviceSettingsUUID = BLEUUID("045cc171-7d99-436f-826c-28fad2ef0df9");
+const auto settingDistanceUUID = BLEUUID("29bbb961-1de7-414c-931d-10af437ac2bb");
+const auto settingDelayUUID = BLEUUID("19f3ba3d-049a-4ea8-82eb-d9a7952cc3c1");
+
+const auto serviceMonitorUUID = BLEUUID("2d0d2cba-85b8-428f-ab5c-fc5d12b22d1a");
+const auto monitorOilLevelUUID = BLEUUID("d30e60b4-4097-4b32-bf2b-5cb3b2306b52");
+
 #define SERVICE_UNKNOWN_UUID "af50deb7-2cc5-4436-87e0-ce784f35ae2d"
 #define UNKNOWN_DATA_1_UUID "dc639c42-f3c8-4bf2-8d0d-37ea801c9773"
 #define UNKNOWN_DATA_2_UUID "3e0ec558-4e1f-4291-ade4-3837cccfe39f"

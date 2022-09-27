@@ -3,12 +3,12 @@
 //
 
 #include "Controller.hpp"
+#include "BLE2901.hpp"
 #include "BlinkIndicator.hpp"
 #include "ErrorCodeIndicator.hpp"
 #include "ServicesUUID.hpp"
 #include <Arduino.h>
 #include <BLE2902.h>
-#include "BLE2901.hpp"
 #include <BLEDevice.h>
 
 Controller::Controller() : m_indicator(new BlinkIndicator(2)), m_button(0), m_protocol(16, 17), m_ecu(&m_protocol) {
