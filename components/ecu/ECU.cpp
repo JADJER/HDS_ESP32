@@ -151,8 +151,8 @@ esp_err_t ECU::updateDataFromTable10() {
   m_sensorsData.iatTemp = calcValueMinus40(result->data[11]);
   m_sensorsData.mapVolts = calcValueDivide256(result->data[12]);
   m_sensorsData.mapPressure = result->data[13];
-  m_vehicleData.batteryVolts = result->data[16];
-  m_vehicleData.speed = calcValueDivide10(result->data[17]);
+  m_vehicleData.batteryVolts = calcValueDivide10(result->data[16]);
+  m_vehicleData.speed = result->data[17];
   m_engineData.fuelInject = (result->data[18] << 8) + result->data[19];
   m_engineData.ignitionAdvance = result->data[20];
 
@@ -177,8 +177,8 @@ esp_err_t ECU::updateDataFromTable11() {
   m_sensorsData.iatTemp = calcValueMinus40(result->data[11]);
   m_sensorsData.mapVolts = calcValueDivide256(result->data[12]);
   m_sensorsData.mapPressure = result->data[13];
-  m_vehicleData.batteryVolts = result->data[16];
-  m_vehicleData.speed = calcValueDivide10(result->data[17]);
+  m_vehicleData.batteryVolts = calcValueDivide10(result->data[16]);
+  m_vehicleData.speed = result->data[17];
   m_engineData.fuelInject = (result->data[18] << 8) + result->data[19];
   m_engineData.ignitionAdvance = result->data[20];
 
