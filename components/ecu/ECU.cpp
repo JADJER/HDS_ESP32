@@ -18,7 +18,7 @@ ECU::ECU(IProtocol* protocol) {
 
   m_vehicleData = {.id = "undefined", .batteryVolts = 12.7, .speed = 120, .state = 1};
   m_engineData = {.rpm = 4300, .fuelInject = 1000, .ignitionAdvance = 19, .unkData1 = 0, .unkData2 = 0, .unkData3 = 0};
-  m_sensorsData = {.tpsPercent = 34.6, .tpsVolts = 1.86, .ectTemp = 87, .ectVolts = 3.2, .iatTemp = 16, .iatVolts = 2.3, .mapPressure = 67.3, .mapVolts = 3.6};
+  m_sensorsData = {.tpsPercent = 34.6, .tpsVolts = 1.86, .ectTemp = 87, .ectVolts = 3.2, .iatTemp = 16, .iatVolts = 2.3, .mapPressure = 69, .mapVolts = 3.6};
   m_errorData = {};
   m_unknownData = {};
 }

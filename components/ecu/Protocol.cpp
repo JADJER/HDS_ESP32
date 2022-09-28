@@ -53,7 +53,7 @@ CommandResult* Protocol::readData() {
     return nullptr;
   }
 
-  result->data = new uint8_t[result->length];
+  result->data = new uint8_t [result->length];
   result->data[0] = result->code;
   result->data[1] = result->length;
   result->data[2] = result->command;

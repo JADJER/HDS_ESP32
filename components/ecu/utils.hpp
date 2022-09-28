@@ -11,28 +11,28 @@
  * @param val
  * @return
  */
-float calcValueDivide256(int val);
+float calcValueDivide256(uint8_t val);
 
 /**
  * @brief
  * @param val
  * @return
  */
-int calcValueMinus40(int val);
+uint8_t calcValueMinus40(uint8_t val);
 
 /**
  * @brief
  * @param val
  * @return
  */
-float calcValueDivide16(int val);
+float calcValueDivide16(uint8_t val);
 
 /**
  * @brief
  * @param val
  * @return
  */
-float calcValueDivide10(int val);
+float calcValueDivide10(uint8_t val);
 
 /**
  * @brief

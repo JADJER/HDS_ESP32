@@ -158,10 +158,10 @@ void Controller::updateCharacteristics() {
   m_vehicleBattery->setValue(vehicleData.batteryVolts);
   m_vehicleBattery->notify();
 
-  m_vehicleSpeed->setValue(vehicleData.speed);
+  m_vehicleSpeed->setValue(&vehicleData.speed, 1);
   m_vehicleSpeed->notify();
 
-  m_vehicleState->setValue(vehicleData.state);
+  m_vehicleState->setValue(&vehicleData.state, 1);
   m_vehicleState->notify();
 
   auto engineData = m_ecu.getEngineData();
@@ -170,10 +170,10 @@ void Controller::updateCharacteristics() {
   m_engineRpm->notify();
 
   m_engineFuelInject->setValue(engineData.fuelInject);
-  m_engineIgnitionAdvance->setValue(engineData.ignitionAdvance);
-  m_engineUnk1->setValue(engineData.unkData1);
-  m_engineUnk2->setValue(engineData.unkData2);
-  m_engineUnk3->setValue(engineData.unkData3);
+  m_engineIgnitionAdvance->setValue(&engineData.ignitionAdvance, 1);
+  m_engineUnk1->setValue(&engineData.unkData1, 1);
+  m_engineUnk2->setValue(&engineData.unkData2, 1);
+  m_engineUnk3->setValue(&engineData.unkData3, 1);
 
   auto sensorsData = m_ecu.getSensorsData();
 
@@ -182,17 +182,17 @@ void Controller::updateCharacteristics() {
 
   m_sensorTpsVoltage->setValue(sensorsData.tpsVolts);
 
-  m_sensorIatTemp->setValue(sensorsData.iatTemp);
+  m_sensorIatTemp->setValue(&sensorsData.iatTemp, 1);
   m_sensorIatTemp->notify();
 
   m_sensorIatVoltage->setValue(sensorsData.iatVolts);
 
-  m_sensorEctTemp->setValue(sensorsData.ectTemp);
+  m_sensorEctTemp->setValue(&sensorsData.ectTemp, 1);
   m_sensorEctTemp->notify();
 
   m_sensorEctVoltage->setValue(sensorsData.ectVolts);
 
-  m_sensorMapPressure->setValue(sensorsData.mapPressure);
+  m_sensorMapPressure->setValue(&sensorsData.mapPressure, 1);
   m_sensorMapPressure->notify();
 
   m_sensorMapVoltage->setValue(sensorsData.mapVolts);

@@ -7,10 +7,10 @@
 struct SensorsData {
   float tpsPercent;
   float tpsVolts;
-  int ectTemp;
+  uint8_t ectTemp;
   float ectVolts;
-  int iatTemp;
+  uint8_t iatTemp;
   float iatVolts;
-  float mapPressure;
+  uint8_t mapPressure;
   float mapVolts;
 };
