@@ -6,7 +6,7 @@ set(SOURCES
         main.cpp
         BLE2901.cpp
         Controller.cpp
-        ServerCallbacks.cpp)
+        ServerCallback.cpp)
 
 set(COMPONENTS
         arduino

@@ -6,7 +6,6 @@
 #include "BLE2901.hpp"
 #include "BlinkIndicator.hpp"
 #include "ErrorCodeIndicator.hpp"
-#include "ServerCallbacks.hpp"
 #include "ServicesUUID.hpp"
 #include <Arduino.h>
 #include <BLE2902.h>
@@ -19,7 +18,7 @@ Controller::Controller() : m_indicator(new BlinkIndicator(2)), m_button(0), m_pr
   m_indicator->blink(100);
 
   m_server = BLEDevice::createServer();
-  m_server->setCallbacks(new ServerCallbacks());
+  m_server->setCallbacks(&m_serverCallback);
 
   {
     auto service = m_server->createService(serviceVehicleUUID, 16);
@@ -134,22 +133,24 @@ Controller::~Controller() = default;
 
 [[noreturn]] void Controller::spin() {
   while (true) {
-    spinOnce();
+    if (m_button.isPressed()) { testTables(); }
+    if (m_serverCallback.isConnected()) { updateCharacteristics(); }
+
     delay(10);
   }
 }
 
-void Controller::spinOnce() {
-  if (m_button.isPressed()) {
-    log_i("Detect all tables...");
+void Controller::testTables() {
+  log_i("Detect all tables...");
 
-    m_indicator->blink(500);
-    m_ecu.detectAllTables();
-    m_indicator->enable();
+  m_indicator->blink(500);
+  m_ecu.detectAllTables();
+  m_indicator->enable();
 
-    m_button.resetState();
-  }
+  m_button.resetState();
+}
 
+void Controller::updateCharacteristics() {
   m_ecu.updateAllData();
 
   auto vehicleData = m_ecu.getVehicleData();

@@ -8,9 +8,9 @@
 #include "ECU.hpp"
 #include "Indicator.hpp"
 #include "Protocol.hpp"
+#include "ServerCallback.hpp"
 #include <BLECharacteristic.h>
 #include <BLEServer.h>
-#include <esp_err.h>
 
 class Controller {
  public:
@@ -26,6 +26,7 @@ class Controller {
   Protocol m_protocol;
   ECU m_ecu;
   BLEServer* m_server;
+  ServerCallback m_serverCallback;
   BLECharacteristic* m_vehicleBattery;
   BLECharacteristic* m_vehicleSpeed;
   BLECharacteristic* m_vehicleState;
@@ -45,5 +46,6 @@ class Controller {
   BLECharacteristic* m_sensorMapVoltage;
 
  private:
-  void spinOnce();
+  void testTables();
+  void updateCharacteristics();
 };

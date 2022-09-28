@@ -16,14 +16,21 @@
 // Created by jadjer on 28.09.22.
 //
 
-#include "ServerCallbacks.hpp"
+#pragma once
 
-#include <BLEDevice.h>
+#include <BLEServer.h>
 
-void ServerCallbacks::onConnect(BLEServer* server) {
-  server->startAdvertising();
-}
+class ServerCallback : public BLEServerCallbacks {
+ public:
+  ServerCallback();
 
-void ServerCallbacks::onDisconnect(BLEServer* server) {
+ public:
+  void onConnect(BLEServer* server) override;
+  void onDisconnect(BLEServer* server) override;
 
-}
+ public:
+  [[nodiscard]] bool isConnected() const;
+
+ private:
+  bool m_isConnected;
+};

@@ -16,12 +16,27 @@
 // Created by jadjer on 28.09.22.
 //
 
-#pragma once
+#include "ServerCallback.hpp"
 
-#include <BLEServer.h>
+#include <Arduino.h>
 
-class ServerCallbacks : public BLEServerCallbacks {
- public:
-  void onConnect(BLEServer* server) override;
-  void onDisconnect(BLEServer* server) override;
-};
+ServerCallback::ServerCallback() {
+  m_isConnected = false;
+}
+
+void ServerCallback::onConnect(BLEServer* server) {
+  m_isConnected = true;
+  log_i("New device is connected");
+  server->startAdvertising();
+}
+
+void ServerCallback::onDisconnect(BLEServer* server) {
+  m_isConnected = false;
+  log_i("Device is disconnected");
+  delay(500);
+  server->startAdvertising();
+}
+
+bool ServerCallback::isConnected() const {
+  return m_isConnected;
+}
