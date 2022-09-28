@@ -136,7 +136,7 @@ Controller::~Controller() = default;
     if (m_button.isPressed()) { testTables(); }
     if (m_serverCallback.isConnected()) { updateCharacteristics(); }
 
-    delay(10);
+    delay(100);
   }
 }
 
