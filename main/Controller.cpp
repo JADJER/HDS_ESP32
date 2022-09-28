@@ -97,6 +97,8 @@ Controller::Controller() : m_indicator(new BlinkIndicator(2)), m_button(0), m_pr
     service->start();
   }
 
+  updateCharacteristics();
+
   auto advertising = m_server->getAdvertising();
   advertising->addServiceUUID(serviceAdvertiseUUID);
   advertising->start();
