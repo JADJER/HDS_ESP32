@@ -16,10 +16,9 @@
 
 #include <Arduino.h>
 
-Indicator::Indicator() : Indicator(2) {}
-
 Indicator::Indicator(int pinNum) {
   m_pinNum = pinNum;
+  m_taskValue = 0;
   m_threadEnable = false;
 
   pinMode(m_pinNum, OUTPUT);
@@ -34,62 +33,21 @@ void Indicator::enable() {
   m_threadEnable = false;
   if (m_thread.joinable()) { m_thread.join(); }
 
-  digitalWrite(m_pinNum, 1);
+  digitalWrite(m_pinNum, HIGH);
 }
 
 void Indicator::disable() {
   m_threadEnable = false;
   if (m_thread.joinable()) { m_thread.join(); }
 
-  digitalWrite(m_pinNum, 0);
+  digitalWrite(m_pinNum, LOW);
 }
 
-void Indicator::blink(int delayMs) {
-  m_threadEnable = false;
-  if (m_thread.joinable()) { m_thread.join(); }
+void Indicator::blink(int value) {
+  m_taskValue = value;
+
+  if (m_threadEnable) { return; }
 
   m_threadEnable = true;
-  m_thread = std::thread(&Indicator::blinkTask, this, delayMs);
-}
-
-void Indicator::blinkErrorCode(int errorCode) {
-  m_threadEnable = false;
-  if (m_thread.joinable()) { m_thread.join(); }
-
-  m_threadEnable = true;
-  m_thread = std::thread(&Indicator::errorBlinkTask, this, errorCode);
-}
-
-void Indicator::blinkTask(int delayMs) const {
-  while (m_threadEnable) {
-    digitalWrite(m_pinNum, 1);
-    delay(delayMs);
-    digitalWrite(m_pinNum, 0);
-    delay(delayMs);
-  }
-}
-
-void Indicator::errorBlinkTask(int errorCode) const {
-  int firstDigit = errorCode / 10;
-  int secondDigit = errorCode % 10;
-
-  while (m_threadEnable) {
-    for (size_t i = 0; i < firstDigit; i++) {
-      digitalWrite(m_pinNum, 1);
-      delay(500);
-      digitalWrite(m_pinNum, 0);
-      delay(500);
-    }
-
-    delay(500);
-
-    for (size_t i = 0; i < secondDigit; i++) {
-      digitalWrite(m_pinNum, 1);
-      delay(250);
-      digitalWrite(m_pinNum, 0);
-      delay(250);
-    }
-
-    delay(3000);
-  }
+  m_thread = std::thread(&Indicator::blinkTask, this);
 }

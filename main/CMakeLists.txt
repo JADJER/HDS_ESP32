@@ -4,12 +4,14 @@ set(CMAKE_CXX_STANDARD 17)
 
 set(SOURCES
         main.cpp
-        Controller.cpp)
+        BLE2901.cpp
+        Controller.cpp
+        ServerCallback.cpp)
 
 set(COMPONENTS
+        arduino
         indicator
         button
-        bluetooth
         ecu)
 
 idf_component_register(SRCS ${SOURCES} INCLUDE_DIRS . REQUIRES ${COMPONENTS})

@@ -11,7 +11,6 @@
  */
 class Button {
  public:
-  Button();
   explicit Button(int8_t buttonPin);
   ~Button();
 
@@ -20,12 +19,12 @@ class Button {
    * @brief
    * @return
    */
-  static bool isPressed();
+  [[nodiscard]] bool isPressed() const;
 
   /**
    * @brief
    */
-  static void resetState();
+  void resetState() const;
 
  private:
   int8_t m_buttonPin;

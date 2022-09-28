@@ -13,48 +13,30 @@
 // limitations under the License.
 
 //
-// Created by jadjer on 23.09.22.
+// Created by jadjer on 28.09.22.
 //
 
-#pragma once
+#include "ServerCallback.hpp"
 
-#include <thread>
+#include <Arduino.h>
 
-/**
- * @brief
- */
-class Indicator {
- public:
-  explicit Indicator(int pinNum);
-  virtual ~Indicator();
+ServerCallback::ServerCallback() {
+  m_isConnected = false;
+}
 
- public:
-  /**
-   * @brief
-   */
-  virtual void enable();
+void ServerCallback::onConnect(BLEServer* server) {
+  m_isConnected = true;
+  log_i("New device is connected");
+  server->startAdvertising();
+}
 
-  /**
-   * @brief
-   */
-  virtual void disable();
+void ServerCallback::onDisconnect(BLEServer* server) {
+  m_isConnected = false;
+  log_i("Device is disconnected");
+  delay(500);
+  server->startAdvertising();
+}
 
-  /**
-   * @brief
-   * @param delayMs
-   */
-  virtual void blink(int delayMs);
-
- protected:
-  int m_pinNum;
-  int m_taskValue;
-  bool m_threadEnable;
-  std::thread m_thread;
-
-  protected:
-  /**
-   * @brief
-   * @param delayMs
-   */
-  virtual void blinkTask() = 0;
-};
+bool ServerCallback::isConnected() const {
+  return m_isConnected;
+}

@@ -11,7 +11,7 @@
  * @param val
  * @return
  */
-int calcValueDivide256(int val);
+float calcValueDivide256(int val);
 
 /**
  * @brief
@@ -25,7 +25,14 @@ int calcValueMinus40(int val);
  * @param val
  * @return
  */
-int calcValueDivide16(int val);
+float calcValueDivide16(int val);
+
+/**
+ * @brief
+ * @param val
+ * @return
+ */
+float calcValueDivide10(int val);
 
 /**
  * @brief

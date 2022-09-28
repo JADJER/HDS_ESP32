@@ -3,7 +3,9 @@ cmake_minimum_required(VERSION 3.17)
 set(CMAKE_CXX_STANDARD 17)
 
 set(SOURCES
-        Indicator.cpp)
+        Indicator.cpp
+        BlinkIndicator.cpp
+        ErrorCodeIndicator.cpp)
 
 set(COMPONENTS
         arduino)

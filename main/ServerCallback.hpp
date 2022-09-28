@@ -13,48 +13,24 @@
 // limitations under the License.
 
 //
-// Created by jadjer on 23.09.22.
+// Created by jadjer on 28.09.22.
 //
 
 #pragma once
 
-#include <thread>
+#include <BLEServer.h>
 
-/**
- * @brief
- */
-class Indicator {
+class ServerCallback : public BLEServerCallbacks {
  public:
-  explicit Indicator(int pinNum);
-  virtual ~Indicator();
+  ServerCallback();
 
  public:
-  /**
-   * @brief
-   */
-  virtual void enable();
+  void onConnect(BLEServer* server) override;
+  void onDisconnect(BLEServer* server) override;
 
-  /**
-   * @brief
-   */
-  virtual void disable();
+ public:
+  [[nodiscard]] bool isConnected() const;
 
-  /**
-   * @brief
-   * @param delayMs
-   */
-  virtual void blink(int delayMs);
-
- protected:
-  int m_pinNum;
-  int m_taskValue;
-  bool m_threadEnable;
-  std::thread m_thread;
-
-  protected:
-  /**
-   * @brief
-   * @param delayMs
-   */
-  virtual void blinkTask() = 0;
+ private:
+  bool m_isConnected;
 };

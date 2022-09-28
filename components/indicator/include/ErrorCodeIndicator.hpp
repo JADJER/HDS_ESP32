@@ -13,48 +13,25 @@
 // limitations under the License.
 
 //
-// Created by jadjer on 23.09.22.
+// Created by jadjer on 26.09.22.
 //
 
 #pragma once
 
-#include <thread>
+#include "Indicator.hpp"
 
 /**
  * @brief
  */
-class Indicator {
+class ErrorCodeIndicator : public Indicator {
  public:
-  explicit Indicator(int pinNum);
-  virtual ~Indicator();
+  explicit ErrorCodeIndicator(int pinNum);
+  ~ErrorCodeIndicator() override;
 
  public:
-  /**
-   * @brief
-   */
-  virtual void enable();
-
-  /**
-   * @brief
-   */
-  virtual void disable();
-
-  /**
-   * @brief
-   * @param delayMs
-   */
-  virtual void blink(int delayMs);
+  void enable() override;
+  void disable() override;
 
  protected:
-  int m_pinNum;
-  int m_taskValue;
-  bool m_threadEnable;
-  std::thread m_thread;
-
-  protected:
-  /**
-   * @brief
-   * @param delayMs
-   */
-  virtual void blinkTask() = 0;
+  void blinkTask() override;
 };

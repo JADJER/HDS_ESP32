@@ -6,8 +6,6 @@
 #include "utils.hpp"
 #include <esp_log.h>
 
-Protocol::Protocol() : Protocol(16, 17) {}
-
 Protocol::Protocol(int8_t rxPin, int8_t txPin) : m_serial(2) {
   m_uartRx = rxPin;
   m_uartTx = txPin;

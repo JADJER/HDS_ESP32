@@ -13,48 +13,11 @@
 // limitations under the License.
 
 //
-// Created by jadjer on 23.09.22.
+// Created by jadjer on 27.09.22.
 //
 
-#pragma once
+#include "BLE2901.hpp"
 
-#include <thread>
-
-/**
- * @brief
- */
-class Indicator {
- public:
-  explicit Indicator(int pinNum);
-  virtual ~Indicator();
-
- public:
-  /**
-   * @brief
-   */
-  virtual void enable();
-
-  /**
-   * @brief
-   */
-  virtual void disable();
-
-  /**
-   * @brief
-   * @param delayMs
-   */
-  virtual void blink(int delayMs);
-
- protected:
-  int m_pinNum;
-  int m_taskValue;
-  bool m_threadEnable;
-  std::thread m_thread;
-
-  protected:
-  /**
-   * @brief
-   * @param delayMs
-   */
-  virtual void blinkTask() = 0;
-};
+BLE2901::BLE2901(std::string const& name) : BLEDescriptor(BLEUUID((uint16_t) 0x2901)) {
+  setValue(name);
+}

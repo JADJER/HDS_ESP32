@@ -11,9 +11,14 @@ ECU::ECU(IProtocol* protocol) {
   m_protocol = protocol;
   m_isConnected = false;
 
-  m_vehicleData = {.id = "undefined", .batteryVolts = 127, .speed = 120, .state = 2};
-  m_engineData = {.rpm = 1300, .fuelInject = 1000, .ignitionAdvance = 10};
-  m_sensorsData = {.tpsPercent = 10, .tpsVolts = 60, .ectTemp = 40, .iatTemp = 16};
+  m_enableTable10 = true;
+  m_enableTable11 = true;
+  m_enableTable20 = true;
+  m_enableTable21 = true;
+
+  m_vehicleData = {.id = "undefined", .batteryVolts = 12.7, .speed = 120, .state = 1};
+  m_engineData = {.rpm = 4300, .fuelInject = 1000, .ignitionAdvance = 19, .unkData1 = 0, .unkData2 = 0, .unkData3 = 0};
+  m_sensorsData = {.tpsPercent = 34.6, .tpsVolts = 1.86, .ectTemp = 87, .ectVolts = 3.2, .iatTemp = 16, .iatVolts = 2.3, .mapPressure = 67.3, .mapVolts = 3.6};
   m_errorData = {};
   m_unknownData = {};
 }
@@ -63,10 +68,10 @@ void ECU::detectActiveTables() {
 
   updateDataFromTable0();
 
-  if (updateDataFromTable10()) { m_enableTable10 = true; }
-  if (updateDataFromTable11()) { m_enableTable11 = true; }
-  if (updateDataFromTable20()) { m_enableTable20 = true; }
-  if (updateDataFromTable21()) { m_enableTable21 = true; }
+  if (updateDataFromTable10() == ESP_OK) { m_enableTable10 = true; }
+  if (updateDataFromTable11() == ESP_OK) { m_enableTable11 = true; }
+  if (updateDataFromTable20() == ESP_OK) { m_enableTable20 = true; }
+  if (updateDataFromTable21() == ESP_OK) { m_enableTable21 = true; }
 }
 
 void ECU::updateAllData() {
@@ -147,7 +152,7 @@ esp_err_t ECU::updateDataFromTable10() {
   m_sensorsData.mapVolts = calcValueDivide256(result->data[12]);
   m_sensorsData.mapPressure = result->data[13];
   m_vehicleData.batteryVolts = result->data[16];
-  m_vehicleData.speed = result->data[17];
+  m_vehicleData.speed = calcValueDivide10(result->data[17]);
   m_engineData.fuelInject = (result->data[18] << 8) + result->data[19];
   m_engineData.ignitionAdvance = result->data[20];
 
@@ -173,7 +178,7 @@ esp_err_t ECU::updateDataFromTable11() {
   m_sensorsData.mapVolts = calcValueDivide256(result->data[12]);
   m_sensorsData.mapPressure = result->data[13];
   m_vehicleData.batteryVolts = result->data[16];
-  m_vehicleData.speed = result->data[17];
+  m_vehicleData.speed = calcValueDivide10(result->data[17]);
   m_engineData.fuelInject = (result->data[18] << 8) + result->data[19];
   m_engineData.ignitionAdvance = result->data[20];
 
