@@ -51,6 +51,7 @@ static auto settingDelayUUID = BLEUUID("19f3ba3d-049a-4ea8-82eb-d9a7952cc3c1");
 
 static auto serviceMonitorUUID = BLEUUID("2d0d2cba-85b8-428f-ab5c-fc5d12b22d1a");
 static auto monitorOilLevelUUID = BLEUUID("d30e60b4-4097-4b32-bf2b-5cb3b2306b52");
+static auto monitorDistanceUUID = BLEUUID("ceb35f68-9621-40ef-ac22-2e0170b1154e");
 
 #define SERVICE_UNKNOWN_UUID "af50deb7-2cc5-4436-87e0-ce784f35ae2d"
 #define UNKNOWN_DATA_1_UUID "dc639c42-f3c8-4bf2-8d0d-37ea801c9773"

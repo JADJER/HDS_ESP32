@@ -5,10 +5,10 @@
 #pragma once
 
 struct EngineData {
-  int rpm;
-  int fuelInject;
-  int ignitionAdvance;
-  int unkData1;
-  int unkData2;
-  int unkData3;
+  uint16_t rpm;
+  uint16_t fuelInject;
+  uint8_t ignitionAdvance;
+  uint8_t unkData1;
+  uint8_t unkData2;
+  uint8_t unkData3;
 };
